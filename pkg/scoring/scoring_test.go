@@ -82,7 +82,7 @@ func TestAnalyzeScore(t *testing.T) {
 		Scenario: ScenarioBalanced,
 	}
 
-	analysis := AnalyzeScore(result)
+	analysis := AnalyzeScore(*result)
 
 	if len(analysis.Strengths) == 0 {
 		t.Error("Should have strengths")

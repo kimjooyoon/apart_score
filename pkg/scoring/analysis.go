@@ -21,9 +21,9 @@ type ScoreFactor struct {
 	Impact   ScoreValue
 }
 
-func AnalyzeScore(result *ScoreResult) *ScoreAnalysis {
+func AnalyzeScore(result ScoreResult) *ScoreAnalysis {
 	analysis := &ScoreAnalysis{
-		Result:          result,
+		Result:          &result,
 		Strengths:       []metadata.MetadataType{},
 		Weaknesses:      []metadata.MetadataType{},
 		TopFactors:      []ScoreFactor{},
@@ -122,7 +122,7 @@ func RecommendScenario(scores map[metadata.MetadataType]ScoreValue) ScoringScena
 	}
 	return ScenarioBalanced
 }
-func FormatScoreResult(result *ScoreResult) string {
+func FormatScoreResult(result ScoreResult) string {
 	output := "🏠 아파트 스코어 결과\n"
 	output += "━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 	output += fmt.Sprintf("총점: %.1f점\n", result.TotalScore)

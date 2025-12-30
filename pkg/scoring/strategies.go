@@ -43,9 +43,9 @@ type RankingsSummary struct {
 
 func CalculateWithStrategy(scores map[metadata.MetadataType]ScoreValue,
 	weights map[metadata.MetadataType]Weight,
-	strategy StrategyType) (*ScoreResult, error) {
+	strategy StrategyType) (ScoreResult, error) {
 	if err := validateStrategyInputs(scores, weights); err != nil {
-		return nil, err
+		return ScoreResult{}, err
 	}
 	switch strategy {
 	case StrategyWeightedSum:
@@ -57,12 +57,12 @@ func CalculateWithStrategy(scores map[metadata.MetadataType]ScoreValue,
 	case StrategyHarmonicMean:
 		return calculateHarmonicMean(scores, weights)
 	default:
-		return nil, fmt.Errorf("지원하지 않는 전략: %s", strategy)
+		return ScoreResult{}, fmt.Errorf("지원하지 않는 전략: %s", strategy)
 	}
 }
 func calculateWeightedSum(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (*ScoreResult, error) {
-	result := &ScoreResult{
+	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+	result := ScoreResult{
 		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
 		RawScores:      make(map[metadata.MetadataType]ScoreValue),
 		Weights:        make(map[metadata.MetadataType]Weight),
@@ -86,8 +86,8 @@ func calculateWeightedSum(scores map[metadata.MetadataType]ScoreValue,
 	return result, nil
 }
 func calculateGeometricMean(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (*ScoreResult, error) {
-	result := &ScoreResult{
+	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+	result := ScoreResult{
 		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
 		RawScores:      make(map[metadata.MetadataType]ScoreValue),
 		Weights:        make(map[metadata.MetadataType]Weight),
@@ -115,8 +115,8 @@ func calculateGeometricMean(scores map[metadata.MetadataType]ScoreValue,
 	return result, nil
 }
 func calculateMinMax(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (*ScoreResult, error) {
-	result := &ScoreResult{
+	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+	result := ScoreResult{
 		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
 		RawScores:      make(map[metadata.MetadataType]ScoreValue),
 		Weights:        make(map[metadata.MetadataType]Weight),
@@ -137,8 +137,8 @@ func calculateMinMax(scores map[metadata.MetadataType]ScoreValue,
 	return result, nil
 }
 func calculateHarmonicMean(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (*ScoreResult, error) {
-	result := &ScoreResult{
+	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+	result := ScoreResult{
 		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
 		RawScores:      make(map[metadata.MetadataType]ScoreValue),
 		Weights:        make(map[metadata.MetadataType]Weight),

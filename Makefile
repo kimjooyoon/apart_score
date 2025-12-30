@@ -9,10 +9,10 @@ help:
 	@echo "  test               - 테스트 실행"
 	@echo "  lint               - 코드 린팅 실행"
 	@echo "  lint-fix           - 코드 린팅 및 자동 수정"
+	@echo "  clean              - 종합 코드 품질 검증 및 정리 (추천)"
 	@echo "  clean-comments     - 모든 Go 파일에서 주석 제거"
 	@echo "  clean-comments-single FILE=<file> - 특정 파일에서 주석 제거"
 	@echo "  restore-backups    - 백업 파일에서 원본 복원"
-	@echo "  clean              - 임시 파일 정리"
 	@echo "  clean-all          - 모든 백업과 임시 파일 정리"
 
 # 프로젝트 빌드
@@ -84,9 +84,9 @@ lint-fix:
 	@echo "🔧 Running golangci-lint with auto-fix..."
 	@golangci-lint run --fix
 
-# 일반 정리
+# 종합 코드 품질 검증 및 정리
 clean:
-	@echo "🧹 Starting code cleanup process..."
+	@echo "🧹 Starting comprehensive code quality workflow..."
 	@echo "📝 Step 1: Removing comments from Go files..."
 
 	# Find all .go files, exclude test files and backup files
@@ -104,17 +104,29 @@ clean:
 	@echo "🎨 Step 2: Applying goimports (includes gofmt + import cleanup)..."
 	@goimports -w .
 
-	@echo "✨ Step 3: Checking for any remaining issues..."
+	@echo "✨ Step 3: Running static analysis (go vet)..."
 	@go vet ./...
 
-	@echo "🗑️  Step 4: Removing backup files..."
+	@echo "🔍 Step 4: Running golangci-lint..."
+	@golangci-lint run
+
+	@echo "🧪 Step 5: Running tests..."
+	@go test ./...
+
+	@echo "🔨 Step 6: Building project..."
+	@go build ./...
+
+	@echo "🗑️  Step 7: Removing backup files..."
 	@find . -name "*.bak" -type f -delete
 
-	@echo "✅ Code cleanup completed successfully!"
+	@echo "✅ Comprehensive code quality check completed successfully!"
 	@echo "   - Comments removed from all Go files"
 	@echo "   - Code formatted with goimports"
 	@echo "   - Imports cleaned up automatically"
-	@echo "   - Static analysis passed"
+	@echo "   - Static analysis passed (go vet)"
+	@echo "   - Code quality check passed (golangci-lint)"
+	@echo "   - All tests passed"
+	@echo "   - Build successful"
 	@echo "   - Backup files cleaned up"
 
 	@find . -name "*.tmp" -delete

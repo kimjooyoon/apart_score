@@ -7,6 +7,10 @@ linters:
     - misspell
     - staticcheck
     - unused
+    - errcheck
+    - unconvert
+    - unparam
+    - errorlint
 
 formatters:
   enable:
@@ -15,3 +19,5 @@ formatters:
 
 run:
   timeout: 5m
+  exclude-files:
+    - "*_test.go"

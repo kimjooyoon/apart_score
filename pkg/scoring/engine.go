@@ -5,11 +5,14 @@ import (
 	"apart_score/pkg/shared"
 )
 
-type Scorer interface {
-	Calculate(scores map[metadata.MetadataType]shared.ScoreValue, weights map[metadata.MetadataType]shared.Weight) (*ScoreResult, error)
-	GetDefaultWeights() map[metadata.MetadataType]shared.Weight
-	ValidateWeights(weights map[metadata.MetadataType]shared.Weight) error
+// CalculateWithMethod performs scoring calculation using the specified method.
+// This replaces the Scorer interface to avoid unnecessary abstraction.
+func CalculateWithMethod(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight,
+	method ScoringMethod) (ScoreResult, error) {
+	return NewDefaultScorer(method).Calculate(scores, weights)
 }
+
 type DefaultScorer struct {
 	method ScoringMethod
 }
@@ -17,31 +20,26 @@ type DefaultScorer struct {
 func NewDefaultScorer(method ScoringMethod) *DefaultScorer {
 	return &DefaultScorer{method: method}
 }
-func (s *DefaultScorer) Calculate(scores map[metadata.MetadataType]shared.ScoreValue, weights map[metadata.MetadataType]shared.Weight) (*ScoreResult, error) {
+func (s *DefaultScorer) Calculate(scores map[metadata.MetadataType]shared.ScoreValue, weights map[metadata.MetadataType]shared.Weight) (ScoreResult, error) {
 	if err := s.ValidateWeights(weights); err != nil {
-		return nil, err
+		return ScoreResult{}, err
 	}
-	result := &ScoreResult{
-		WeightedScores: make(map[metadata.MetadataType]shared.ScoreValue),
-		RawScores:      make(map[metadata.MetadataType]shared.ScoreValue),
-		Weights:        make(map[metadata.MetadataType]shared.Weight),
-		Method:         s.method,
+	result := ScoreResult{
+		Method: s.method,
 	}
-	var totalWeightedSum shared.ScoreValue
+	var totalWeightedSum float64
 	var totalWeight shared.Weight
 	for _, mt := range metadata.AllMetadataTypes() {
 		rawScore := scores[mt]
 		weight := weights[mt]
-		// 정수 기반 계산: (score * weight) / WeightScale
 		weightedScore := shared.ScoreValue(int64(rawScore) * int64(weight) / shared.WeightScale)
 		result.RawScores[mt] = rawScore
 		result.Weights[mt] = weight
-		result.WeightedScores[mt] = weightedScore
-		totalWeightedSum += weightedScore
+		result.WeightedScores[mt] = weightedScore.ToFloat()
+		totalWeightedSum += weightedScore.ToFloat()
 		totalWeight += weight
 	}
 	if totalWeight > 0 {
-		// 정수 기반 평균: totalWeightedSum (이미 정규화됨)
 		result.TotalScore = totalWeightedSum
 	}
 	return result, nil

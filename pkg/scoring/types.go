@@ -11,17 +11,9 @@ type ScoreResult struct {
 	WeightedScores [14]float64
 	RawScores      [14]shared.ScoreValue
 	Weights        [14]shared.Weight
-	Method         ScoringMethod
+	Method         StrategyType
 	Scenario       ScoringScenario
 }
-type ScoringMethod string
-
-const (
-	MethodWeightedSum   ScoringMethod = "weighted_sum"
-	MethodGeometricMean ScoringMethod = "geometric_mean"
-	MethodMinMax        ScoringMethod = "min_max"
-	MethodHarmonicMean  ScoringMethod = "harmonic_mean"
-)
 
 type ScoringScenario string
 
@@ -37,7 +29,7 @@ const (
 type ScoringProfile struct {
 	Name        string
 	Description string
-	Method      ScoringMethod
+	Method      StrategyType
 	Weights     map[metadata.MetadataType]shared.Weight
 	Scenario    ScoringScenario
 }

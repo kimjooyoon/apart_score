@@ -3,9 +3,19 @@ package scoring
 import (
 	"apart_score/pkg/metadata"
 	"apart_score/pkg/shared"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
+)
+
+// Error messages for validation
+const (
+	errInvalidScoreRange  = "잘못된 점수 범위 (%s: %.1f)"
+	errInvalidWeightRange = "잘못된 가중치 범위 (%s: %.3f)"
+	errWeightSumMismatch  = "가중치 합계가 1000이 아닙니다 (현재: %d)"
+	errNoApartments       = "순위를 매길 아파트가 없습니다"
+	errCalculationFailed  = "아파트 %s 점수 계산 실패: %w"
 )
 
 type StrategyType string
@@ -28,7 +38,7 @@ type RankingResult struct {
 	Score      float64                                   `json:"score"`
 	Rank       int                                       `json:"rank"`
 	Percentile float64                                   `json:"percentile"`
-	Method     ScoringMethod                             `json:"method"`
+	Method     StrategyType                              `json:"method"`
 	Weights    [metadata.MetadataTypeCount]shared.Weight `json:"weights"`
 }
 type RankingsSummary struct {
@@ -42,7 +52,7 @@ type RankingsSummary struct {
 	} `json:"score_range"`
 }
 
-// CalculateWithStrategy calculates scores using maps (legacy compatibility).
+// CalculateWithStrategy calculates scores using maps for convenience.
 func CalculateWithStrategy(scores map[metadata.MetadataType]shared.ScoreValue,
 	weights map[metadata.MetadataType]shared.Weight,
 	strategy StrategyType) (ScoreResult, error) {
@@ -68,7 +78,7 @@ func CalculateWithStrategyArray(scores [14]shared.ScoreValue,
 		return ScoreResult{}, err
 	}
 
-	result := ScoreResult{Method: MethodWeightedSum}
+	result := ScoreResult{Method: StrategyWeightedSum}
 
 	switch strategy {
 	case StrategyWeightedSum:
@@ -87,7 +97,7 @@ func CalculateWithStrategyArray(scores [14]shared.ScoreValue,
 		if totalWeight > 0 {
 			result.TotalScore = totalWeightedSum / (float64(totalWeight) / float64(shared.WeightScale))
 		}
-		result.Method = MethodWeightedSum
+		result.Method = StrategyWeightedSum
 
 	case StrategyGeometricMean:
 		minScore := shared.ScoreValueFromFloat(0.1)
@@ -109,7 +119,7 @@ func CalculateWithStrategyArray(scores [14]shared.ScoreValue,
 		if totalWeight > 0 {
 			result.TotalScore = math.Exp(logSum / totalWeight.ToFloat())
 		}
-		result.Method = MethodGeometricMean
+		result.Method = StrategyGeometricMean
 
 	case StrategyMinMax:
 		minScore := shared.ScoreValueFromFloat(100.0)
@@ -125,7 +135,7 @@ func CalculateWithStrategyArray(scores [14]shared.ScoreValue,
 			}
 		}
 		result.TotalScore = minScore.ToFloat()
-		result.Method = MethodMinMax
+		result.Method = StrategyMinMax
 
 	case StrategyHarmonicMean:
 		minScore := shared.ScoreValueFromFloat(0.1)
@@ -146,7 +156,7 @@ func CalculateWithStrategyArray(scores [14]shared.ScoreValue,
 		if weightedHarmonicSum > 0 && totalWeight > 0 {
 			result.TotalScore = totalWeight.ToFloat() / weightedHarmonicSum
 		}
-		result.Method = MethodHarmonicMean
+		result.Method = StrategyHarmonicMean
 
 	default:
 		return ScoreResult{}, fmt.Errorf("지원하지 않는 전략: %s", strategy)
@@ -159,42 +169,38 @@ func validateStrategyInputsArray(scores [14]shared.ScoreValue,
 	for i, score := range scores {
 		if score < 0 || score > 100*shared.ScoreScale {
 			mt := metadata.MetadataType(i)
-			return fmt.Errorf("잘못된 점수 범위 (%s: %.1f)", mt.String(), score.ToFloat())
+			return fmt.Errorf(errInvalidScoreRange, mt.String(), score.ToFloat())
 		}
 	}
 	totalWeight := shared.Weight(0)
 	for i, weight := range weights {
 		if weight < 0 || weight > shared.WeightScale {
 			mt := metadata.MetadataType(i)
-			return fmt.Errorf("잘못된 가중치 범위 (%s: %.3f)", mt.String(), weight.ToFloat())
+			return fmt.Errorf(errInvalidWeightRange, mt.String(), weight.ToFloat())
 		}
 		totalWeight += weight
 	}
 	if totalWeight < shared.WeightScale-1 || totalWeight > shared.WeightScale+1 {
-		return fmt.Errorf("가중치 합계가 1000이 아닙니다 (현재: %d)", totalWeight)
+		return fmt.Errorf(errWeightSumMismatch, totalWeight)
 	}
 	return nil
 }
 
 func validateStrategyInputs(scores map[metadata.MetadataType]shared.ScoreValue,
 	weights map[metadata.MetadataType]shared.Weight) error {
+	// Convert MetadataType maps to int maps for shared functions
+	intScores := make(map[int]shared.ScoreValue)
+	intWeights := make(map[int]shared.Weight)
 	for mt, score := range scores {
-		if score < 0 || score > 100*shared.ScoreScale {
-			return fmt.Errorf("잘못된 점수 범위 (%s: %.1f)", mt.String(), score.ToFloat())
-		}
+		intScores[int(mt)] = score
 	}
-	totalWeight := shared.Weight(0)
-	for _, mt := range shared.FastAllMetadataTypes() {
-		weight := weights[mt]
-		if weight < 0 || weight > shared.WeightScale {
-			return fmt.Errorf("잘못된 가중치 범위 (%s: %.3f)", mt.String(), weight.ToFloat())
-		}
-		totalWeight += weight
+	for mt, weight := range weights {
+		intWeights[int(mt)] = weight
 	}
-	if totalWeight < shared.WeightScale-1 || totalWeight > shared.WeightScale+1 {
-		return fmt.Errorf("가중치 합계가 1000이 아닙니다 (현재: %d)", totalWeight)
-	}
-	return nil
+
+	scoreArray := shared.NewScoreArrayFromMap(intScores)
+	weightArray := shared.NewWeightArrayFromMap(intWeights)
+	return validateStrategyInputsArray(scoreArray, weightArray)
 }
 func GetAvailableStrategies() []StrategyType {
 	return []StrategyType{
@@ -256,35 +262,6 @@ type StrategyGuide struct {
 	Weaknesses  []string // 단점들
 }
 
-// RecommendStrategy recommends the best calculation strategy based on user profile.
-func RecommendStrategy(userProfile map[string]interface{}) StrategyType {
-	// 기본값: Weighted Sum
-	if userProfile == nil {
-		return StrategyWeightedSum
-	}
-
-	// 가족 구성원 수 확인
-	familySize, hasFamily := userProfile["family_size"].(int)
-	if hasFamily && familySize > 3 {
-		return StrategyGeometricMean // 모든 요소 균형 필요
-	}
-
-	// 예산 제한 확인
-	budget, hasBudget := userProfile["budget_constraint"].(bool)
-	if hasBudget && budget {
-		return StrategyMinMax // 최소 요구사항 우선
-	}
-
-	// 투자 목적 확인
-	investment, hasInvestment := userProfile["investment_focus"].(bool)
-	if hasInvestment && investment {
-		return StrategyHarmonicMean // 효율성 중심
-	}
-
-	// 기본 추천
-	return StrategyWeightedSum
-}
-
 func GetStrategyDescription(strategy StrategyType) string {
 	switch strategy {
 	case StrategyWeightedSum:
@@ -306,8 +283,8 @@ func CalculateWithPipeline(scores map[metadata.MetadataType]shared.ScoreValue,
 	pipeline CalculationPipeline) (ScoreResult, error) {
 
 	result := ScoreResult{
-		Method:   MethodWeightedSum, // 기본값
-		Scenario: ScenarioBalanced,  // 기본값
+		Method:   StrategyWeightedSum, // 기본값
+		Scenario: ScenarioBalanced,    // 기본값
 	}
 
 	// 우선순위에 따라 스텝 정렬 (낮은 우선순위가 먼저 실행)
@@ -383,7 +360,7 @@ func CreateFamilyPipeline() CalculationPipeline {
 }
 func CalculateRankings(apartments []ApartmentData, weights map[metadata.MetadataType]shared.Weight, strategy StrategyType) (*RankingsSummary, error) {
 	if len(apartments) == 0 {
-		return nil, fmt.Errorf("순위를 매길 아파트가 없습니다")
+		return nil, errors.New(errNoApartments)
 	}
 	if err := validateStrategyInputs(apartments[0].Scores, weights); err != nil {
 		return nil, fmt.Errorf("입력 검증 실패: %w", err)
@@ -395,7 +372,7 @@ func CalculateRankings(apartments []ApartmentData, weights map[metadata.Metadata
 	for _, apt := range apartments {
 		result, err := CalculateWithStrategy(apt.Scores, weights, strategy)
 		if err != nil {
-			return nil, fmt.Errorf("아파트 %s 점수 계산 실패: %w", apt.ID, err)
+			return nil, fmt.Errorf(errCalculationFailed, apt.ID, err)
 		}
 		ranking := RankingResult{
 			Apartment: apt,

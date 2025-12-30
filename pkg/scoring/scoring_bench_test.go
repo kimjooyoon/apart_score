@@ -104,7 +104,7 @@ func BenchmarkMetadataOperations(b *testing.B) {
 
 	b.Run("AllMetadataTypes", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			metadata.AllMetadataTypes()
+			shared.FastAllMetadataTypes()
 		}
 	})
 

@@ -34,7 +34,7 @@ type ScoreArray [14]ScoreValue
 // WeightArray represents an array of weights indexed by MetadataType.
 type WeightArray [14]Weight
 
-// NewScoreArrayFromMap creates a ScoreArray from a map using MetadataType as key.
+// NewScoreArrayFromMap creates a ScoreArray from a map using int as key.
 func NewScoreArrayFromMap(scores map[int]ScoreValue) ScoreArray {
 	var arr ScoreArray
 	for i := 0; i < 14; i++ {
@@ -45,7 +45,7 @@ func NewScoreArrayFromMap(scores map[int]ScoreValue) ScoreArray {
 	return arr
 }
 
-// NewWeightArrayFromMap creates a WeightArray from a map using MetadataType as key.
+// NewWeightArrayFromMap creates a WeightArray from a map using int as key.
 func NewWeightArrayFromMap(weights map[int]Weight) WeightArray {
 	var arr WeightArray
 	for i := 0; i < 14; i++ {
@@ -54,16 +54,6 @@ func NewWeightArrayFromMap(weights map[int]Weight) WeightArray {
 		}
 	}
 	return arr
-}
-
-// NewScoreArrayFromMetadataMap creates a ScoreArray from a metadata.MetadataType map.
-func NewScoreArrayFromMetadataMap(scores map[int]ScoreValue) ScoreArray {
-	return NewScoreArrayFromMap(scores)
-}
-
-// NewWeightArrayFromMetadataMap creates a WeightArray from a metadata.MetadataType map.
-func NewWeightArrayFromMetadataMap(weights map[int]Weight) WeightArray {
-	return NewWeightArrayFromMap(weights)
 }
 
 // ToMap converts ScoreArray to a map for compatibility.

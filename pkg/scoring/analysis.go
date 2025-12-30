@@ -219,8 +219,8 @@ func generateScoreBreakdown(result ScoreResult, scores map[metadata.MetadataType
 		breakdown.WeightContributions[mt.String()] = weightFloat / totalWeight * 100 // 백분율
 	}
 
-	// 전략 영향 분석 (StrategyType으로 변환)
-	currentStrategy := StrategyType(result.Method)
+	// 전략 영향 분석
+	currentStrategy := result.Method
 	breakdown.StrategyImpact = analyzeStrategyImpact(scores, weights, currentStrategy)
 
 	return breakdown

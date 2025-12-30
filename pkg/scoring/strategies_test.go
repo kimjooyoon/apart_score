@@ -58,8 +58,8 @@ func TestCalculateWeightedSum(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != MethodWeightedSum {
-		t.Errorf("Expected method %v, got %v", MethodWeightedSum, result.Method)
+	if result.Method != StrategyWeightedSum {
+		t.Errorf("Expected method %v, got %v", StrategyWeightedSum, result.Method)
 	}
 
 	// 점수가 유효한 범위인지 확인 (양수)
@@ -81,8 +81,8 @@ func TestCalculateGeometricMean(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != MethodGeometricMean {
-		t.Errorf("Expected method %v, got %v", MethodGeometricMean, result.Method)
+	if result.Method != StrategyGeometricMean {
+		t.Errorf("Expected method %v, got %v", StrategyGeometricMean, result.Method)
 	}
 
 	// 기하 평균은 산술 평균보다 낮아야 함
@@ -101,8 +101,8 @@ func TestCalculateMinMax(t *testing.T) {
 		t.Fatalf("Calculate failed: %v", err)
 	}
 
-	if result.Method != MethodMinMax {
-		t.Errorf("Expected method %v, got %v", MethodMinMax, result.Method)
+	if result.Method != StrategyMinMax {
+		t.Errorf("Expected method %v, got %v", StrategyMinMax, result.Method)
 	}
 
 	// Min-Max 전략에서는 총점이 최소 점수와 같아야 함
@@ -132,8 +132,8 @@ func TestCalculateHarmonicMean(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != MethodHarmonicMean {
-		t.Errorf("Expected method %v, got %v", MethodHarmonicMean, result.Method)
+	if result.Method != StrategyHarmonicMean {
+		t.Errorf("Expected method %v, got %v", StrategyHarmonicMean, result.Method)
 	}
 
 	// 조화 평균은 다른 평균들보다 낮아야 함

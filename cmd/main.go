@@ -41,7 +41,7 @@ func main() {
 	fmt.Printf("방법: %s\n", result.Method)
 	fmt.Printf("시나리오: %s\n", result.Scenario)
 	fmt.Println("\n📊 상세 점수:")
-	for _, mt := range metadata.AllMetadataTypes() {
+	for _, mt := range shared.FastAllMetadataTypes() {
 		idx := int(mt)
 		rawScore := result.RawScores[idx]
 		weight := result.Weights[idx]

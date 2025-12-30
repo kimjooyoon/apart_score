@@ -18,7 +18,7 @@ func TestCalculateWithStrategy(t *testing.T) {
 		// 다른 요소들은 70점으로 설정
 	}
 
-	for _, mt := range metadata.AllMetadataTypes() {
+	for _, mt := range shared.FastAllMetadataTypes() {
 		if _, exists := scores[mt]; !exists {
 			scores[mt] = shared.ScoreValueFromFloat(70.0)
 		}
@@ -44,7 +44,7 @@ func TestQuickScore(t *testing.T) {
 	}
 
 	// 다른 요소들 기본값 설정
-	for _, mt := range metadata.AllMetadataTypes() {
+	for _, mt := range shared.FastAllMetadataTypes() {
 		if _, exists := scores[mt]; !exists {
 			scores[mt] = 70.0
 		}

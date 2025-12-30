@@ -68,43 +68,34 @@ func main() {
 	}
 	recommended := scoring.RecommendScenario(apartmentScores)
 	fmt.Printf("\n추천 시나리오: %s\n", scoring.GetScenarioDescription(recommended))
-
-	// 사용자 정의 스코어링 테이블 예제
 	fmt.Println("\n=== 사용자 정의 스코어링 테이블 예제 ===")
-
-	// "교통 최우선" 사용자 정의 테이블
 	customWeights := map[metadata.MetadataType]scoring.Weight{
-		metadata.DistanceToStation:    0.30, // 교통이 가장 중요
-		metadata.TransportationAccess: 0.25, // 대중교통 접근성
-		metadata.NearbyAmenities:      0.15, // 주변 편의시설
-		metadata.FloorLevel:           0.10, // 층수
-		metadata.ElevatorPresence:     0.08, // 엘리베이터
-		metadata.ConstructionYear:     0.05, // 건축년도
-		metadata.ConstructionCompany:  0.02, // 건설회사
-		metadata.ApartmentSize:        0.02, // 크기
-		metadata.SchoolDistrict:       0.01, // 학군
-		metadata.CrimeRate:            0.01, // 범죄율
-		metadata.GreenSpaceRatio:      0.01, // 녹지율
-		metadata.Parking:              0.00, // 주차장 (중요하지 않음)
-		metadata.MaintenanceFee:       0.00, // 관리비 (중요하지 않음)
-		metadata.HeatingSystem:        0.00, // 난방 (중요하지 않음)
+		metadata.DistanceToStation:    0.30,
+		metadata.TransportationAccess: 0.25,
+		metadata.NearbyAmenities:      0.15,
+		metadata.FloorLevel:           0.10,
+		metadata.ElevatorPresence:     0.08,
+		metadata.ConstructionYear:     0.05,
+		metadata.ConstructionCompany:  0.02,
+		metadata.ApartmentSize:        0.02,
+		metadata.SchoolDistrict:       0.01,
+		metadata.CrimeRate:            0.01,
+		metadata.GreenSpaceRatio:      0.01,
+		metadata.Parking:              0.00,
+		metadata.MaintenanceFee:       0.00,
+		metadata.HeatingSystem:        0.00,
 	}
-
-	// 사용자 정의 테이블로 점수 계산
 	customResult, err := scoring.CalculateWithStrategy(apartmentScores, customWeights, scoring.StrategyWeightedSum)
 	if err != nil {
 		fmt.Printf("사용자 정의 스코어링 실패: %v\n", err)
 	} else {
 		fmt.Println("🎯 교통 최우선 스코어링 테이블 결과:")
 		fmt.Println(scoring.FormatScoreResult(customResult))
-
-		// 기존 균형 테이블과 비교
 		fmt.Println("\n📊 비교 분석:")
 		fmt.Printf("균형 테이블 점수: %.1f점\n", result.TotalScore)
 		fmt.Printf("교통 최우선 점수: %.1f점\n", customResult.TotalScore)
 		fmt.Printf("차이: %.1f점\n", customResult.TotalScore-result.TotalScore)
 	}
-
 	fmt.Println("\n=== 여러 아파트 순위 비교 ===")
 	apartments := []scoring.ApartmentData{
 		{

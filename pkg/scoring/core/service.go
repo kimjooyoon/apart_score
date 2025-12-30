@@ -10,7 +10,6 @@ type Scorer interface {
 	GetDefaultWeights() map[metadata.MetadataType]shared.Weight
 	ValidateWeights(weights map[metadata.MetadataType]shared.Weight) error
 }
-
 type DefaultScorer struct {
 	method ScoringMethod
 }
@@ -18,7 +17,6 @@ type DefaultScorer struct {
 func NewDefaultScorer(method ScoringMethod) *DefaultScorer {
 	return &DefaultScorer{method: method}
 }
-
 func (s *DefaultScorer) Calculate(scores map[metadata.MetadataType]shared.ScoreValue, weights map[metadata.MetadataType]shared.Weight) (ScoreResult, error) {
 	if err := s.ValidateWeights(weights); err != nil {
 		return ScoreResult{}, err
@@ -46,7 +44,6 @@ func (s *DefaultScorer) Calculate(scores map[metadata.MetadataType]shared.ScoreV
 	}
 	return result, nil
 }
-
 func (s *DefaultScorer) GetDefaultWeights() map[metadata.MetadataType]shared.Weight {
 	weights := map[metadata.MetadataType]shared.Weight{
 		metadata.FloorLevel:           0.08,
@@ -64,9 +61,8 @@ func (s *DefaultScorer) GetDefaultWeights() map[metadata.MetadataType]shared.Wei
 		metadata.MaintenanceFee:       0.05,
 		metadata.HeatingSystem:        0.03,
 	}
-	return NormalizeWeights(weights)
+	return shared.NormalizeWeights(weights)
 }
-
 func (s *DefaultScorer) ValidateWeights(weights map[metadata.MetadataType]shared.Weight) error {
 	var totalWeight shared.Weight
 	for _, mt := range metadata.AllMetadataTypes() {

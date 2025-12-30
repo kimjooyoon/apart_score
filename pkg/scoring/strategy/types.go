@@ -16,21 +16,19 @@ const (
 )
 
 type ApartmentData struct {
-	ID       string                                `json:"id"`
-	Name     string                                `json:"name"`
+	ID       string                                      `json:"id"`
+	Name     string                                      `json:"name"`
 	Scores   map[metadata.MetadataType]shared.ScoreValue `json:"scores"`
-	Location string                                `json:"location"`
+	Location string                                      `json:"location"`
 }
-
 type RankingResult struct {
-	Apartment   ApartmentData     `json:"apartment"`
-	Score       shared.ScoreValue `json:"score"`
-	Rank        int               `json:"rank"`
-	Percentile  float64           `json:"percentile"`
-	Method      core.ScoringMethod `json:"method"`
-	Weights     map[metadata.MetadataType]shared.Weight `json:"weights"`
+	Apartment  ApartmentData                           `json:"apartment"`
+	Score      shared.ScoreValue                       `json:"score"`
+	Rank       int                                     `json:"rank"`
+	Percentile float64                                 `json:"percentile"`
+	Method     core.ScoringMethod                      `json:"method"`
+	Weights    map[metadata.MetadataType]shared.Weight `json:"weights"`
 }
-
 type RankingsSummary struct {
 	TotalApartments int             `json:"total_apartments"`
 	Strategy        StrategyType    `json:"strategy"`

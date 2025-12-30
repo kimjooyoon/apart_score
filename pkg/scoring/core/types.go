@@ -13,7 +13,6 @@ type ScoreResult struct {
 	Method         ScoringMethod
 	Scenario       ScoringScenario
 }
-
 type ScoringMethod string
 
 const (

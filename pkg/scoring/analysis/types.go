@@ -14,7 +14,6 @@ type ScoreAnalysis struct {
 	ImprovementTips []string
 	ComparisonScore float64
 }
-
 type ScoreFactor struct {
 	Metadata metadata.MetadataType
 	Score    shared.ScoreValue

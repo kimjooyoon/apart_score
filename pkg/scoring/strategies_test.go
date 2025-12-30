@@ -1,13 +1,12 @@
-package strategies
+package scoring
 
 import (
 	"apart_score/pkg/metadata"
-	"apart_score/pkg/scoring"
 	"testing"
 )
 
-func getTestScores() map[metadata.MetadataType]scoring.ScoreValue {
-	return map[metadata.MetadataType]scoring.ScoreValue{
+func getTestScores() map[metadata.MetadataType]ScoreValue {
+	return map[metadata.MetadataType]ScoreValue{
 		metadata.FloorLevel:           85.0,
 		metadata.DistanceToStation:    90.0,
 		metadata.ElevatorPresence:     100.0,
@@ -25,8 +24,8 @@ func getTestScores() map[metadata.MetadataType]scoring.ScoreValue {
 	}
 }
 
-func getTestWeights() map[metadata.MetadataType]scoring.Weight {
-	return map[metadata.MetadataType]scoring.Weight{
+func getTestWeights() map[metadata.MetadataType]Weight {
+	return map[metadata.MetadataType]Weight{
 		metadata.FloorLevel:           0.08,
 		metadata.DistanceToStation:    0.14,
 		metadata.ElevatorPresence:     0.07,
@@ -44,12 +43,11 @@ func getTestWeights() map[metadata.MetadataType]scoring.Weight {
 	}
 }
 
-func TestWeightedSumStrategy_Calculate(t *testing.T) {
-	strategy := NewWeightedSumStrategy()
+func TestCalculateWeightedSum(t *testing.T) {
 	scores := getTestScores()
 	weights := getTestWeights()
 
-	result, err := strategy.Calculate(scores, weights, nil)
+	result, err := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
 	if err != nil {
 		t.Fatalf("Calculate failed: %v", err)
 	}
@@ -58,8 +56,8 @@ func TestWeightedSumStrategy_Calculate(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != scoring.MethodWeightedSum {
-		t.Errorf("Expected method %v, got %v", scoring.MethodWeightedSum, result.Method)
+	if result.Method != MethodWeightedSum {
+		t.Errorf("Expected method %v, got %v", MethodWeightedSum, result.Method)
 	}
 
 	// 점수가 유효한 범위인지 확인 (양수)
@@ -68,12 +66,11 @@ func TestWeightedSumStrategy_Calculate(t *testing.T) {
 	}
 }
 
-func TestGeometricMeanStrategy_Calculate(t *testing.T) {
-	strategy := NewGeometricMeanStrategy()
+func TestCalculateGeometricMean(t *testing.T) {
 	scores := getTestScores()
 	weights := getTestWeights()
 
-	result, err := strategy.Calculate(scores, weights, nil)
+	result, err := CalculateWithStrategy(scores, weights, StrategyGeometricMean)
 	if err != nil {
 		t.Fatalf("Calculate failed: %v", err)
 	}
@@ -82,30 +79,28 @@ func TestGeometricMeanStrategy_Calculate(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != scoring.MethodGeometricMean {
-		t.Errorf("Expected method %v, got %v", scoring.MethodGeometricMean, result.Method)
+	if result.Method != MethodGeometricMean {
+		t.Errorf("Expected method %v, got %v", MethodGeometricMean, result.Method)
 	}
 
 	// 기하 평균은 산술 평균보다 낮아야 함
-	ws := NewWeightedSumStrategy()
-	wsResult, _ := ws.Calculate(scores, weights, nil)
+	wsResult, _ := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
 	if result.TotalScore >= wsResult.TotalScore {
 		t.Error("Geometric mean should be lower than weighted sum for unbalanced scores")
 	}
 }
 
-func TestMinMaxStrategy_Calculate(t *testing.T) {
-	strategy := NewMinMaxStrategy()
+func TestCalculateMinMax(t *testing.T) {
 	scores := getTestScores()
 	weights := getTestWeights()
 
-	result, err := strategy.Calculate(scores, weights, nil)
+	result, err := CalculateWithStrategy(scores, weights, StrategyMinMax)
 	if err != nil {
 		t.Fatalf("Calculate failed: %v", err)
 	}
 
-	if result.Method != scoring.MethodMinMax {
-		t.Errorf("Expected method %v, got %v", scoring.MethodMinMax, result.Method)
+	if result.Method != MethodMinMax {
+		t.Errorf("Expected method %v, got %v", MethodMinMax, result.Method)
 	}
 
 	// Min-Max 전략에서는 총점이 최소 점수와 같아야 함
@@ -121,12 +116,11 @@ func TestMinMaxStrategy_Calculate(t *testing.T) {
 	}
 }
 
-func TestHarmonicMeanStrategy_Calculate(t *testing.T) {
-	strategy := NewHarmonicMeanStrategy()
+func TestCalculateHarmonicMean(t *testing.T) {
 	scores := getTestScores()
 	weights := getTestWeights()
 
-	result, err := strategy.Calculate(scores, weights, nil)
+	result, err := CalculateWithStrategy(scores, weights, StrategyHarmonicMean)
 	if err != nil {
 		t.Fatalf("Calculate failed: %v", err)
 	}
@@ -135,27 +129,24 @@ func TestHarmonicMeanStrategy_Calculate(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != scoring.MethodHarmonicMean {
-		t.Errorf("Expected method %v, got %v", scoring.MethodHarmonicMean, result.Method)
+	if result.Method != MethodHarmonicMean {
+		t.Errorf("Expected method %v, got %v", MethodHarmonicMean, result.Method)
 	}
 
 	// 조화 평균은 다른 평균들보다 낮아야 함
-	ws := NewWeightedSumStrategy()
-	wsResult, _ := ws.Calculate(scores, weights, nil)
+	wsResult, _ := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
 	if result.TotalScore >= wsResult.TotalScore {
 		t.Error("Harmonic mean should be lower than or equal to weighted sum")
 	}
 }
 
-func TestStrategyFactory(t *testing.T) {
-	factory := NewDefaultStrategyFactory()
-
-	strategies := factory.GetAvailableStrategies()
-	expected := []scoring.ScoringMethod{
-		scoring.MethodWeightedSum,
-		scoring.MethodGeometricMean,
-		scoring.MethodMinMax,
-		scoring.MethodHarmonicMean,
+func TestGetAvailableStrategies(t *testing.T) {
+	strategies := GetAvailableStrategies()
+	expected := []StrategyType{
+		StrategyWeightedSum,
+		StrategyGeometricMean,
+		StrategyMinMax,
+		StrategyHarmonicMean,
 	}
 
 	if len(strategies) != len(expected) {
@@ -167,51 +158,76 @@ func TestStrategyFactory(t *testing.T) {
 			t.Errorf("Expected strategy %v at index %d, got %v", expectedStrategy, i, strategies[i])
 		}
 	}
-
-	// 각 전략 생성 테스트
-	for _, method := range strategies {
-		strategy, err := factory.CreateStrategy(method)
-		if err != nil {
-			t.Errorf("Failed to create strategy %v: %v", method, err)
-		}
-		if strategy.Name() == "" {
-			t.Errorf("Strategy %v has empty name", method)
-		}
-	}
 }
 
 func TestStrategyValidation(t *testing.T) {
-	strategy := NewWeightedSumStrategy()
-
 	// 유효한 입력
 	validScores := getTestScores()
 	validWeights := getTestWeights()
 
-	err := strategy.ValidateInputs(validScores, validWeights)
+	err := validateStrategyInputs(validScores, validWeights)
 	if err != nil {
 		t.Errorf("Valid inputs should pass validation: %v", err)
 	}
 
 	// 잘못된 점수 (음수)
-	invalidScores := make(map[metadata.MetadataType]scoring.ScoreValue)
+	invalidScores := make(map[metadata.MetadataType]ScoreValue)
 	for k, v := range validScores {
 		invalidScores[k] = v
 	}
 	invalidScores[metadata.FloorLevel] = -10
 
-	err = strategy.ValidateInputs(invalidScores, validWeights)
+	err = validateStrategyInputs(invalidScores, validWeights)
 	if err == nil {
 		t.Error("Invalid scores should fail validation")
 	}
 
 	// 잘못된 가중치 합계
-	invalidWeights := make(map[metadata.MetadataType]scoring.Weight)
+	invalidWeights := make(map[metadata.MetadataType]Weight)
 	for k, v := range validWeights {
 		invalidWeights[k] = v * 2 // 합계가 2가 되도록
 	}
 
-	err = strategy.ValidateInputs(validScores, invalidWeights)
+	err = validateStrategyInputs(validScores, invalidWeights)
 	if err == nil {
 		t.Error("Invalid weights should fail validation")
 	}
+}
+
+func TestGetStrategyDescription(t *testing.T) {
+	tests := []struct {
+		strategy  StrategyType
+		expected  string
+		hasPrefix bool
+	}{
+		{StrategyWeightedSum, "각 메타데이터의 점수에 가중치를 곱한 후 합계를 계산하는 기본 전략입니다.", false},
+		{StrategyGeometricMean, "모든 요소가 균형을 이루어야 하는 경우에 적합한 전략입니다. 하나의 낮은 점수가 전체 점수를 크게 낮춥니다.", false},
+		{StrategyMinMax, "모든 요소가 일정 수준 이상이어야 하는 경우에 적합합니다. 가장 낮은 점수가 전체 점수를 결정합니다.", false},
+		{StrategyHarmonicMean, "낮은 점수에 매우 민감하게 반응하는 전략입니다. 모든 요소가 고르게 중요할 때 사용합니다.", false},
+		{"unknown", "알 수 없는 전략입니다.", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.strategy), func(t *testing.T) {
+			result := GetStrategyDescription(tt.strategy)
+			if tt.hasPrefix && !contains(result, tt.expected) {
+				t.Errorf("Expected description to contain %q, got %q", tt.expected, result)
+			} else if !tt.hasPrefix && result != tt.expected {
+				t.Errorf("Expected description %q, got %q", tt.expected, result)
+			}
+		})
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) && (s[:len(substr)] == substr || s[len(s)-len(substr):] == substr || containsAt(s, substr)))
+}
+
+func containsAt(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }

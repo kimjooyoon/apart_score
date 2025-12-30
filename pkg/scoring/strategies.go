@@ -2,6 +2,7 @@ package scoring
 
 import (
 	"apart_score/pkg/metadata"
+	"apart_score/pkg/shared"
 	"fmt"
 	"math"
 	"sort"
@@ -17,32 +18,32 @@ const (
 )
 
 type ApartmentData struct {
-	ID       string                               `json:"id"`
-	Name     string                               `json:"name"`
-	Scores   map[metadata.MetadataType]ScoreValue `json:"scores"`
-	Location string                               `json:"location"`
+	ID       string                                     `json:"id"`
+	Name     string                                     `json:"name"`
+	Scores   map[metadata.MetadataType]shared.ScoreValue `json:"scores"`
+	Location string                                     `json:"location"`
 }
 type RankingResult struct {
 	Apartment  ApartmentData                    `json:"apartment"`
-	Score      ScoreValue                       `json:"score"`
+	Score      shared.ScoreValue                `json:"score"`
 	Rank       int                              `json:"rank"`
 	Percentile float64                          `json:"percentile"`
 	Method     ScoringMethod                    `json:"method"`
-	Weights    map[metadata.MetadataType]Weight `json:"weights"`
+	Weights    map[metadata.MetadataType]shared.Weight `json:"weights"`
 }
 type RankingsSummary struct {
 	TotalApartments int             `json:"total_apartments"`
 	Strategy        StrategyType    `json:"strategy"`
 	TopRanked       []RankingResult `json:"top_ranked"`
 	ScoreRange      struct {
-		Min ScoreValue `json:"min"`
-		Max ScoreValue `json:"max"`
-		Avg ScoreValue `json:"avg"`
+		Min shared.ScoreValue `json:"min"`
+		Max shared.ScoreValue `json:"max"`
+		Avg shared.ScoreValue `json:"avg"`
 	} `json:"score_range"`
 }
 
-func CalculateWithStrategy(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight,
+func CalculateWithStrategy(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight,
 	strategy StrategyType) (ScoreResult, error) {
 	if err := validateStrategyInputs(scores, weights); err != nil {
 		return ScoreResult{}, err
@@ -60,20 +61,20 @@ func CalculateWithStrategy(scores map[metadata.MetadataType]ScoreValue,
 		return ScoreResult{}, fmt.Errorf("지원하지 않는 전략: %s", strategy)
 	}
 }
-func calculateWeightedSum(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+func calculateWeightedSum(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight) (ScoreResult, error) {
 	result := ScoreResult{
-		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
-		RawScores:      make(map[metadata.MetadataType]ScoreValue),
-		Weights:        make(map[metadata.MetadataType]Weight),
+		WeightedScores: make(map[metadata.MetadataType]shared.ScoreValue),
+		RawScores:      make(map[metadata.MetadataType]shared.ScoreValue),
+		Weights:        make(map[metadata.MetadataType]shared.Weight),
 		Method:         MethodWeightedSum,
 	}
-	var totalWeightedSum ScoreValue
-	var totalWeight Weight
+	var totalWeightedSum shared.ScoreValue
+	var totalWeight shared.Weight
 	for _, mt := range metadata.AllMetadataTypes() {
 		rawScore := scores[mt]
 		weight := weights[mt]
-		weightedScore := rawScore * ScoreValue(weight)
+		weightedScore := rawScore *shared.ScoreValue(weight)
 		result.RawScores[mt] = rawScore
 		result.Weights[mt] = weight
 		result.WeightedScores[mt] = weightedScore
@@ -81,21 +82,21 @@ func calculateWeightedSum(scores map[metadata.MetadataType]ScoreValue,
 		totalWeight += weight
 	}
 	if totalWeight > 0 {
-		result.TotalScore = totalWeightedSum / ScoreValue(totalWeight)
+		result.TotalScore = totalWeightedSum /shared.ScoreValue(totalWeight)
 	}
 	return result, nil
 }
-func calculateGeometricMean(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+func calculateGeometricMean(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight) (ScoreResult, error) {
 	result := ScoreResult{
-		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
-		RawScores:      make(map[metadata.MetadataType]ScoreValue),
-		Weights:        make(map[metadata.MetadataType]Weight),
+		WeightedScores: make(map[metadata.MetadataType]shared.ScoreValue),
+		RawScores:      make(map[metadata.MetadataType]shared.ScoreValue),
+		Weights:        make(map[metadata.MetadataType]shared.Weight),
 		Method:         MethodGeometricMean,
 	}
-	minScore := ScoreValue(0.1)
+	minScore := shared.ScoreValueFromFloat(0.1)
 	var logSum float64
-	var totalWeight Weight
+	var totalWeight shared.Weight
 	for _, mt := range metadata.AllMetadataTypes() {
 		rawScore := scores[mt]
 		weight := weights[mt]
@@ -105,30 +106,30 @@ func calculateGeometricMean(scores map[metadata.MetadataType]ScoreValue,
 		weightedLog := math.Log(float64(rawScore)) * float64(weight)
 		result.RawScores[mt] = scores[mt]
 		result.Weights[mt] = weight
-		result.WeightedScores[mt] = ScoreValue(math.Exp(weightedLog))
+		result.WeightedScores[mt] =shared.ScoreValue(math.Exp(weightedLog))
 		logSum += weightedLog
 		totalWeight += weight
 	}
 	if totalWeight > 0 {
-		result.TotalScore = ScoreValue(math.Exp(logSum / float64(totalWeight)))
+		result.TotalScore =shared.ScoreValue(math.Exp(logSum / float64(totalWeight)))
 	}
 	return result, nil
 }
-func calculateMinMax(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+func calculateMinMax(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight) (ScoreResult, error) {
 	result := ScoreResult{
-		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
-		RawScores:      make(map[metadata.MetadataType]ScoreValue),
-		Weights:        make(map[metadata.MetadataType]Weight),
+		WeightedScores: make(map[metadata.MetadataType]shared.ScoreValue),
+		RawScores:      make(map[metadata.MetadataType]shared.ScoreValue),
+		Weights:        make(map[metadata.MetadataType]shared.Weight),
 		Method:         MethodMinMax,
 	}
-	minScore := ScoreValue(100.0)
+	minScore := shared.ScoreValueFromFloat(100.0)
 	for _, mt := range metadata.AllMetadataTypes() {
 		rawScore := scores[mt]
 		weight := weights[mt]
 		result.RawScores[mt] = rawScore
 		result.Weights[mt] = weight
-		result.WeightedScores[mt] = rawScore * ScoreValue(weight)
+		result.WeightedScores[mt] = rawScore *shared.ScoreValue(weight)
 		if rawScore < minScore {
 			minScore = rawScore
 		}
@@ -136,17 +137,17 @@ func calculateMinMax(scores map[metadata.MetadataType]ScoreValue,
 	result.TotalScore = minScore
 	return result, nil
 }
-func calculateHarmonicMean(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) (ScoreResult, error) {
+func calculateHarmonicMean(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight) (ScoreResult, error) {
 	result := ScoreResult{
-		WeightedScores: make(map[metadata.MetadataType]ScoreValue),
-		RawScores:      make(map[metadata.MetadataType]ScoreValue),
-		Weights:        make(map[metadata.MetadataType]Weight),
+		WeightedScores: make(map[metadata.MetadataType]shared.ScoreValue),
+		RawScores:      make(map[metadata.MetadataType]shared.ScoreValue),
+		Weights:        make(map[metadata.MetadataType]shared.Weight),
 		Method:         MethodHarmonicMean,
 	}
-	minScore := ScoreValue(0.1)
+	minScore := shared.ScoreValueFromFloat(0.1)
 	var weightedHarmonicSum float64
-	var totalWeight Weight
+	var totalWeight shared.Weight
 	for _, mt := range metadata.AllMetadataTypes() {
 		rawScore := scores[mt]
 		weight := weights[mt]
@@ -156,32 +157,32 @@ func calculateHarmonicMean(scores map[metadata.MetadataType]ScoreValue,
 		weightedHarmonic := float64(weight) / float64(rawScore)
 		result.RawScores[mt] = scores[mt]
 		result.Weights[mt] = weight
-		result.WeightedScores[mt] = ScoreValue(float64(weight) * float64(rawScore))
+		result.WeightedScores[mt] =shared.ScoreValue(float64(weight) * float64(rawScore))
 		weightedHarmonicSum += weightedHarmonic
 		totalWeight += weight
 	}
 	if weightedHarmonicSum > 0 && totalWeight > 0 {
-		result.TotalScore = ScoreValue(float64(totalWeight) / weightedHarmonicSum)
+		result.TotalScore =shared.ScoreValue(float64(totalWeight) / weightedHarmonicSum)
 	}
 	return result, nil
 }
-func validateStrategyInputs(scores map[metadata.MetadataType]ScoreValue,
-	weights map[metadata.MetadataType]Weight) error {
+func validateStrategyInputs(scores map[metadata.MetadataType]shared.ScoreValue,
+	weights map[metadata.MetadataType]shared.Weight) error {
 	for mt, score := range scores {
-		if score < 0 || score > 100 {
-			return fmt.Errorf("잘못된 점수 범위 (%s: %.1f)", mt.String(), score)
+		if score < 0 || score > 100*shared.ScoreScale {
+			return fmt.Errorf("잘못된 점수 범위 (%s: %.1f)", mt.String(), score.ToFloat())
 		}
 	}
-	var totalWeight Weight
+	var totalWeight shared.Weight
 	for _, mt := range metadata.AllMetadataTypes() {
 		weight := weights[mt]
-		if weight < 0 || weight > 1 {
-			return fmt.Errorf("잘못된 가중치 범위 (%s: %.3f)", mt.String(), weight)
+		if weight < 0 || weight > shared.WeightScale {
+			return fmt.Errorf("잘못된 가중치 범위 (%s: %.3f)", mt.String(), weight.ToFloat())
 		}
 		totalWeight += weight
 	}
-	if totalWeight < 0.99 || totalWeight > 1.01 {
-		return fmt.Errorf("가중치 합계가 1.0이 아닙니다 (현재: %.3f)", totalWeight)
+	if totalWeight < shared.WeightScale-1 || totalWeight > shared.WeightScale+1 {
+		return fmt.Errorf("가중치 합계가 1000이 아닙니다 (현재: %d)", totalWeight)
 	}
 	return nil
 }
@@ -207,7 +208,7 @@ func GetStrategyDescription(strategy StrategyType) string {
 		return "알 수 없는 전략입니다."
 	}
 }
-func CalculateRankings(apartments []ApartmentData, weights map[metadata.MetadataType]Weight, strategy StrategyType) (*RankingsSummary, error) {
+func CalculateRankings(apartments []ApartmentData, weights map[metadata.MetadataType]shared.Weight, strategy StrategyType) (*RankingsSummary, error) {
 	if len(apartments) == 0 {
 		return nil, fmt.Errorf("순위를 매길 아파트가 없습니다")
 	}
@@ -215,9 +216,9 @@ func CalculateRankings(apartments []ApartmentData, weights map[metadata.Metadata
 		return nil, fmt.Errorf("입력 검증 실패: %w", err)
 	}
 	var rankings []RankingResult
-	var totalScore ScoreValue
-	minScore := ScoreValue(100.0)
-	maxScore := ScoreValue(0.0)
+	var totalScore shared.ScoreValue
+	minScore := shared.ScoreValueFromFloat(100.0)
+	maxScore := shared.ScoreValue(0.0)
 	for _, apt := range apartments {
 		result, err := CalculateWithStrategy(apt.Scores, weights, strategy)
 		if err != nil {
@@ -256,7 +257,7 @@ func CalculateRankings(apartments []ApartmentData, weights map[metadata.Metadata
 	}
 	summary.ScoreRange.Min = minScore
 	summary.ScoreRange.Max = maxScore
-	summary.ScoreRange.Avg = totalScore / ScoreValue(len(apartments))
+	summary.ScoreRange.Avg =shared.ScoreValue(int64(totalScore) / int64(len(apartments)))
 	return summary, nil
 }
 func FormatRankings(summary *RankingsSummary, limit int) string {
@@ -266,7 +267,7 @@ func FormatRankings(summary *RankingsSummary, limit int) string {
 	output := fmt.Sprintf("🏆 아파트 순위표 (%s 전략)\n", GetStrategyDescription(summary.Strategy))
 	output += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 	output += fmt.Sprintf("총 아파트 수: %d개\n", summary.TotalApartments)
-	output += fmt.Sprintf("점수 범위: %.1f - %.1f (평균: %.1f)\n", summary.ScoreRange.Min, summary.ScoreRange.Max, summary.ScoreRange.Avg)
+	output += fmt.Sprintf("점수 범위: %.1f - %.1f (평균: %.1f)\n", summary.ScoreRange.Min.ToFloat(), summary.ScoreRange.Max.ToFloat(), summary.ScoreRange.Avg.ToFloat())
 	output += "\n📊 순위 결과:\n"
 	displayCount := len(summary.TopRanked)
 	if limit > 0 && limit < displayCount {
@@ -279,7 +280,7 @@ func FormatRankings(summary *RankingsSummary, limit int) string {
 			rankEmoji,
 			ranking.Rank,
 			ranking.Apartment.Name,
-			ranking.Score,
+			ranking.Score.ToFloat(),
 			ranking.Percentile)
 	}
 	if displayCount < len(summary.TopRanked) {

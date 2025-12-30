@@ -1,130 +1,119 @@
 package scoring
 
-import "apart_score/pkg/metadata"
+import (
+	"apart_score/pkg/metadata"
+	"apart_score/pkg/shared"
+)
 
-func NormalizeWeights(weights map[metadata.MetadataType]Weight) map[metadata.MetadataType]Weight {
-	var total Weight
-	for _, w := range weights {
-		total += w
-	}
-	if total == 0 {
-		return weights
-	}
-	normalized := make(map[metadata.MetadataType]Weight)
-	for mt, w := range weights {
-		normalized[mt] = w / total
-	}
-	return normalized
-}
-func GetScenarioWeights(scenario ScoringScenario) map[metadata.MetadataType]Weight {
-	var weights map[metadata.MetadataType]Weight
+func GetScenarioWeights(scenario ScoringScenario) map[metadata.MetadataType]shared.Weight {
+	var weights map[metadata.MetadataType]shared.Weight
 	switch scenario {
 	case ScenarioTransportation:
-		weights = map[metadata.MetadataType]Weight{
-			metadata.FloorLevel:           0.05,
-			metadata.DistanceToStation:    0.25,
-			metadata.ElevatorPresence:     0.05,
-			metadata.ConstructionYear:     0.08,
-			metadata.ConstructionCompany:  0.05,
-			metadata.ApartmentSize:        0.07,
-			metadata.NearbyAmenities:      0.10,
-			metadata.TransportationAccess: 0.20,
-			metadata.SchoolDistrict:       0.05,
-			metadata.CrimeRate:            0.05,
-			metadata.GreenSpaceRatio:      0.02,
-			metadata.Parking:              0.05,
-			metadata.MaintenanceFee:       0.05,
-			metadata.HeatingSystem:        0.03,
+		weights = map[metadata.MetadataType]shared.Weight{
+			metadata.FloorLevel:           shared.WeightFromFloat(0.05),
+			metadata.DistanceToStation:    shared.WeightFromFloat(0.25),
+			metadata.ElevatorPresence:     shared.WeightFromFloat(0.05),
+			metadata.ConstructionYear:     shared.WeightFromFloat(0.08),
+			metadata.ConstructionCompany:  shared.WeightFromFloat(0.05),
+			metadata.ApartmentSize:        shared.WeightFromFloat(0.07),
+			metadata.NearbyAmenities:      shared.WeightFromFloat(0.10),
+			metadata.TransportationAccess: shared.WeightFromFloat(0.20),
+			metadata.SchoolDistrict:       shared.WeightFromFloat(0.05),
+			metadata.CrimeRate:            shared.WeightFromFloat(0.05),
+			metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.02),
+			metadata.Parking:              shared.WeightFromFloat(0.05),
+			metadata.MaintenanceFee:       shared.WeightFromFloat(0.05),
+			metadata.HeatingSystem:        shared.WeightFromFloat(0.03),
 		}
 	case ScenarioEducation:
-		weights = map[metadata.MetadataType]Weight{
-			metadata.FloorLevel:           0.08,
-			metadata.DistanceToStation:    0.08,
-			metadata.ElevatorPresence:     0.07,
-			metadata.ConstructionYear:     0.10,
-			metadata.ConstructionCompany:  0.08,
-			metadata.ApartmentSize:        0.08,
-			metadata.NearbyAmenities:      0.08,
-			metadata.TransportationAccess: 0.08,
-			metadata.SchoolDistrict:       0.20,
-			metadata.CrimeRate:            0.08,
-			metadata.GreenSpaceRatio:      0.05,
-			metadata.Parking:              0.05,
-			metadata.MaintenanceFee:       0.04,
-			metadata.HeatingSystem:        0.03,
+		weights = map[metadata.MetadataType]shared.Weight{
+			metadata.FloorLevel:           shared.WeightFromFloat(0.08),
+			metadata.DistanceToStation:    shared.WeightFromFloat(0.08),
+			metadata.ElevatorPresence:     shared.WeightFromFloat(0.07),
+			metadata.ConstructionYear:     shared.WeightFromFloat(0.10),
+			metadata.ConstructionCompany:  shared.WeightFromFloat(0.08),
+			metadata.ApartmentSize:        shared.WeightFromFloat(0.08),
+			metadata.NearbyAmenities:      shared.WeightFromFloat(0.08),
+			metadata.TransportationAccess: shared.WeightFromFloat(0.08),
+			metadata.SchoolDistrict:       shared.WeightFromFloat(0.20),
+			metadata.CrimeRate:            shared.WeightFromFloat(0.08),
+			metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.05),
+			metadata.Parking:              shared.WeightFromFloat(0.05),
+			metadata.MaintenanceFee:       shared.WeightFromFloat(0.04),
+			metadata.HeatingSystem:        shared.WeightFromFloat(0.03),
 		}
 	case ScenarioCostEffective:
-		weights = map[metadata.MetadataType]Weight{
-			metadata.FloorLevel:           0.08,
-			metadata.DistanceToStation:    0.12,
-			metadata.ElevatorPresence:     0.07,
-			metadata.ConstructionYear:     0.08,
-			metadata.ConstructionCompany:  0.05,
-			metadata.ApartmentSize:        0.12,
-			metadata.NearbyAmenities:      0.10,
-			metadata.TransportationAccess: 0.08,
-			metadata.SchoolDistrict:       0.08,
-			metadata.CrimeRate:            0.08,
-			metadata.GreenSpaceRatio:      0.05,
-			metadata.Parking:              0.06,
-			metadata.MaintenanceFee:       0.10,
-			metadata.HeatingSystem:        0.03,
+		weights = map[metadata.MetadataType]shared.Weight{
+			metadata.FloorLevel:           shared.WeightFromFloat(0.08),
+			metadata.DistanceToStation:    shared.WeightFromFloat(0.12),
+			metadata.ElevatorPresence:     shared.WeightFromFloat(0.07),
+			metadata.ConstructionYear:     shared.WeightFromFloat(0.08),
+			metadata.ConstructionCompany:  shared.WeightFromFloat(0.05),
+			metadata.ApartmentSize:        shared.WeightFromFloat(0.12),
+			metadata.NearbyAmenities:      shared.WeightFromFloat(0.10),
+			metadata.TransportationAccess: shared.WeightFromFloat(0.08),
+			metadata.SchoolDistrict:       shared.WeightFromFloat(0.08),
+			metadata.CrimeRate:            shared.WeightFromFloat(0.08),
+			metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.05),
+			metadata.Parking:              shared.WeightFromFloat(0.06),
+			metadata.MaintenanceFee:       shared.WeightFromFloat(0.10),
+			metadata.HeatingSystem:        shared.WeightFromFloat(0.03),
 		}
 	case ScenarioFamilyFriendly:
-		weights = map[metadata.MetadataType]Weight{
-			metadata.FloorLevel:           0.10,
-			metadata.DistanceToStation:    0.08,
-			metadata.ElevatorPresence:     0.12,
-			metadata.ConstructionYear:     0.10,
-			metadata.ConstructionCompany:  0.08,
-			metadata.ApartmentSize:        0.12,
-			metadata.NearbyAmenities:      0.08,
-			metadata.TransportationAccess: 0.05,
-			metadata.SchoolDistrict:       0.12,
-			metadata.CrimeRate:            0.08,
-			metadata.GreenSpaceRatio:      0.08,
-			metadata.Parking:              0.06,
-			metadata.MaintenanceFee:       0.05,
-			metadata.HeatingSystem:        0.03,
+		weights = map[metadata.MetadataType]shared.Weight{
+			metadata.FloorLevel:           shared.WeightFromFloat(0.10),
+			metadata.DistanceToStation:    shared.WeightFromFloat(0.08),
+			metadata.ElevatorPresence:     shared.WeightFromFloat(0.12),
+			metadata.ConstructionYear:     shared.WeightFromFloat(0.10),
+			metadata.ConstructionCompany:  shared.WeightFromFloat(0.08),
+			metadata.ApartmentSize:        shared.WeightFromFloat(0.12),
+			metadata.NearbyAmenities:      shared.WeightFromFloat(0.08),
+			metadata.TransportationAccess: shared.WeightFromFloat(0.05),
+			metadata.SchoolDistrict:       shared.WeightFromFloat(0.12),
+			metadata.CrimeRate:            shared.WeightFromFloat(0.08),
+			metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.08),
+			metadata.Parking:              shared.WeightFromFloat(0.06),
+			metadata.MaintenanceFee:       shared.WeightFromFloat(0.05),
+			metadata.HeatingSystem:        shared.WeightFromFloat(0.03),
 		}
 	case ScenarioInvestment:
-		weights = map[metadata.MetadataType]Weight{
-			metadata.FloorLevel:           0.05,
-			metadata.DistanceToStation:    0.15,
-			metadata.ElevatorPresence:     0.05,
-			metadata.ConstructionYear:     0.20,
-			metadata.ConstructionCompany:  0.15,
-			metadata.ApartmentSize:        0.08,
-			metadata.NearbyAmenities:      0.10,
-			metadata.TransportationAccess: 0.12,
-			metadata.SchoolDistrict:       0.05,
-			metadata.CrimeRate:            0.02,
-			metadata.GreenSpaceRatio:      0.05,
-			metadata.Parking:              0.05,
-			metadata.MaintenanceFee:       0.05,
-			metadata.HeatingSystem:        0.03,
+		weights = map[metadata.MetadataType]shared.Weight{
+			metadata.FloorLevel:           shared.WeightFromFloat(0.05),
+			metadata.DistanceToStation:    shared.WeightFromFloat(0.15),
+			metadata.ElevatorPresence:     shared.WeightFromFloat(0.05),
+			metadata.ConstructionYear:     shared.WeightFromFloat(0.20),
+			metadata.ConstructionCompany:  shared.WeightFromFloat(0.15),
+			metadata.ApartmentSize:        shared.WeightFromFloat(0.08),
+			metadata.NearbyAmenities:      shared.WeightFromFloat(0.10),
+			metadata.TransportationAccess: shared.WeightFromFloat(0.12),
+			metadata.SchoolDistrict:       shared.WeightFromFloat(0.05),
+			metadata.CrimeRate:            shared.WeightFromFloat(0.02),
+			metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.05),
+			metadata.Parking:              shared.WeightFromFloat(0.05),
+			metadata.MaintenanceFee:       shared.WeightFromFloat(0.05),
+			metadata.HeatingSystem:        shared.WeightFromFloat(0.03),
 		}
 	case ScenarioBalanced:
 		fallthrough
 	default:
-		weights = map[metadata.MetadataType]Weight{
-			metadata.FloorLevel:           0.08,
-			metadata.DistanceToStation:    0.15,
-			metadata.ElevatorPresence:     0.07,
-			metadata.ConstructionYear:     0.10,
-			metadata.ConstructionCompany:  0.08,
-			metadata.ApartmentSize:        0.08,
-			metadata.NearbyAmenities:      0.10,
-			metadata.TransportationAccess: 0.12,
-			metadata.SchoolDistrict:       0.08,
-			metadata.CrimeRate:            0.06,
-			metadata.GreenSpaceRatio:      0.04,
-			metadata.Parking:              0.06,
-			metadata.MaintenanceFee:       0.05,
-			metadata.HeatingSystem:        0.03,
+		weights = map[metadata.MetadataType]shared.Weight{
+			metadata.FloorLevel:           shared.WeightFromFloat(0.08),
+			metadata.DistanceToStation:    shared.WeightFromFloat(0.15),
+			metadata.ElevatorPresence:     shared.WeightFromFloat(0.07),
+			metadata.ConstructionYear:     shared.WeightFromFloat(0.10),
+			metadata.ConstructionCompany:  shared.WeightFromFloat(0.08),
+			metadata.ApartmentSize:        shared.WeightFromFloat(0.08),
+			metadata.NearbyAmenities:      shared.WeightFromFloat(0.10),
+			metadata.TransportationAccess: shared.WeightFromFloat(0.12),
+			metadata.SchoolDistrict:       shared.WeightFromFloat(0.08),
+			metadata.CrimeRate:            shared.WeightFromFloat(0.06),
+			metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.04),
+			metadata.Parking:              shared.WeightFromFloat(0.06),
+			metadata.MaintenanceFee:       shared.WeightFromFloat(0.05),
+			metadata.HeatingSystem:        shared.WeightFromFloat(0.03),
 		}
 	}
-	return NormalizeWeights(weights)
+	return shared.NormalizeWeights(weights)
 }
 func GetScenarioDescription(scenario ScoringScenario) string {
 	switch scenario {

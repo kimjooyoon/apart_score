@@ -49,11 +49,15 @@ func SetFactorType(mt MetadataType, factorType FactorType) error {
 	metadataInfos[mt].factorType = factorType
 	return nil
 }
-func GetMetadataByFactorType(factorType FactorType) []MetadataType {
-	var result []MetadataType
+// GetMetadataByFactorType는 지정된 팩터 타입의 메타데이터 타입들을 배열로 반환합니다.
+// 반환된 배열에서 사용되지 않는 요소는 0값입니다.
+func GetMetadataByFactorType(factorType FactorType) [MetadataTypeCount]MetadataType {
+	var result [MetadataTypeCount]MetadataType
+	index := 0
 	for mt := MetadataType(0); mt < MetadataTypeCount; mt++ {
-		if mt.FactorType() == factorType {
-			result = append(result, mt)
+		if mt.FactorType() == factorType && index < int(MetadataTypeCount) {
+			result[index] = mt
+			index++
 		}
 	}
 	return result

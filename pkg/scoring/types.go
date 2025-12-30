@@ -1,14 +1,14 @@
 package scoring
 
-import "apart_score/pkg/metadata"
-
-type ScoreValue float64
-type Weight float64
+import (
+	"apart_score/pkg/metadata"
+	"apart_score/pkg/shared"
+)
 type ScoreResult struct {
-	TotalScore     ScoreValue
-	WeightedScores map[metadata.MetadataType]ScoreValue
-	RawScores      map[metadata.MetadataType]ScoreValue
-	Weights        map[metadata.MetadataType]Weight
+	TotalScore     shared.ScoreValue
+	WeightedScores map[metadata.MetadataType]shared.ScoreValue
+	RawScores      map[metadata.MetadataType]shared.ScoreValue
+	Weights        map[metadata.MetadataType]shared.Weight
 	Method         ScoringMethod
 	Scenario       ScoringScenario
 }
@@ -36,6 +36,6 @@ type ScoringProfile struct {
 	Name        string
 	Description string
 	Method      ScoringMethod
-	Weights     map[metadata.MetadataType]Weight
+	Weights     map[metadata.MetadataType]shared.Weight
 	Scenario    ScoringScenario
 }

@@ -4,13 +4,14 @@ import (
 	"testing"
 
 	"apart_score/pkg/metadata"
+	"apart_score/pkg/shared"
 )
 
 func TestDefaultScorer_Calculate(t *testing.T) {
-	scorer := NewDefaultScorer(MethodWeightedSum)
+	scorer := NewDefaultScorer(Methodshared.WeightedSum)
 
 	// 테스트용 점수 데이터
-	scores := map[metadata.MetadataType]ScoreValue{
+	scores := map[metadata.MetadataType]shared.ScoreValue{
 		metadata.FloorLevel:        85.0,
 		metadata.DistanceToStation: 90.0,
 		metadata.ElevatorPresence:  100.0,
@@ -23,7 +24,7 @@ func TestDefaultScorer_Calculate(t *testing.T) {
 		}
 	}
 
-	weights := scorer.GetDefaultWeights()
+	weights := scorer.GetDefaultshared.Weights()
 
 	result, err := scorer.Calculate(scores, weights)
 	if err != nil {
@@ -36,7 +37,7 @@ func TestDefaultScorer_Calculate(t *testing.T) {
 }
 
 func TestQuickScore(t *testing.T) {
-	scores := map[metadata.MetadataType]ScoreValue{
+	scores := map[metadata.MetadataType]shared.ScoreValue{
 		metadata.FloorLevel:        85.0,
 		metadata.DistanceToStation: 90.0,
 		metadata.ElevatorPresence:  100.0,
@@ -49,8 +50,8 @@ func TestQuickScore(t *testing.T) {
 		}
 	}
 
-	weights := GetScenarioWeights(ScenarioBalanced)
-	result, err := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
+	weights := GetScenarioshared.Weights(ScenarioBalanced)
+	result, err := CalculateWithStrategy(scores, weights, Strategyshared.WeightedSum)
 	if err != nil {
 		t.Fatalf("QuickScore failed: %v", err)
 	}
@@ -66,19 +67,19 @@ func TestAnalyzeScore(t *testing.T) {
 	// 테스트용 결과 생성
 	result := &ScoreResult{
 		TotalScore: 85.0,
-		RawScores: map[metadata.MetadataType]ScoreValue{
+		RawScores: map[metadata.MetadataType]shared.ScoreValue{
 			metadata.FloorLevel:        90.0, // 강점
 			metadata.DistanceToStation: 95.0, // 강점
 			metadata.ElevatorPresence:  50.0, // 약점
 			metadata.MaintenanceFee:    55.0, // 약점
 		},
-		Weights: map[metadata.MetadataType]Weight{
+		shared.Weights: map[metadata.MetadataType]shared.Weight{
 			metadata.FloorLevel:        0.1,
 			metadata.DistanceToStation: 0.2,
 			metadata.ElevatorPresence:  0.1,
 			metadata.MaintenanceFee:    0.1,
 		},
-		Method:   MethodWeightedSum,
+		Method:   Methodshared.WeightedSum,
 		Scenario: ScenarioBalanced,
 	}
 
@@ -99,7 +100,7 @@ func TestAnalyzeScore(t *testing.T) {
 
 func TestRecommendScenario(t *testing.T) {
 	// 교통 점수가 높은 경우
-	transportScores := map[metadata.MetadataType]ScoreValue{
+	transportScores := map[metadata.MetadataType]shared.ScoreValue{
 		metadata.DistanceToStation:    95.0,
 		metadata.TransportationAccess: 90.0,
 	}
@@ -110,7 +111,7 @@ func TestRecommendScenario(t *testing.T) {
 	}
 
 	// 교육 점수가 높은 경우
-	educationScores := map[metadata.MetadataType]ScoreValue{
+	educationScores := map[metadata.MetadataType]shared.ScoreValue{
 		metadata.SchoolDistrict: 95.0,
 	}
 
@@ -128,8 +129,8 @@ func TestGetScenarioWeights(t *testing.T) {
 	}
 
 	// 교통 시나리오에서 역까지 거리 가중치가 높아야 함
-	stationWeight := weights[metadata.DistanceToStation]
-	if stationWeight < 0.2 {
-		t.Errorf("Transportation scenario should have high station weight, got %v", stationWeight)
+	stationshared.Weight := weights[metadata.DistanceToStation]
+	if stationshared.Weight < 0.2 {
+		t.Errorf("Transportation scenario should have high station weight, got %v", stationshared.Weight)
 	}
 }

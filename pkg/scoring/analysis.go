@@ -2,6 +2,7 @@ package scoring
 
 import (
 	"apart_score/pkg/metadata"
+	"apart_score/pkg/shared"
 	"fmt"
 	"sort"
 )
@@ -16,9 +17,9 @@ type ScoreAnalysis struct {
 }
 type ScoreFactor struct {
 	Metadata metadata.MetadataType
-	Score    ScoreValue
-	Weight   Weight
-	Impact   ScoreValue
+	Score    shared.ScoreValue
+	Weight   shared.Weight
+	Impact   shared.ScoreValue
 }
 
 func AnalyzeScore(result ScoreResult) *ScoreAnalysis {
@@ -32,7 +33,8 @@ func AnalyzeScore(result ScoreResult) *ScoreAnalysis {
 	var factors []ScoreFactor
 	for mt, score := range result.RawScores {
 		weight := result.Weights[mt]
-		impact := score * ScoreValue(weight)
+		// 정수 기반 계산: (score * weight) / WeightScale
+		impact := shared.ScoreValue(int64(score) * int64(weight) / shared.WeightScale)
 		factors = append(factors, ScoreFactor{
 			Metadata: mt,
 			Score:    score,
@@ -55,7 +57,7 @@ func AnalyzeScore(result ScoreResult) *ScoreAnalysis {
 	analysis.TopFactors = factors[:maxFactors]
 	analysis.ImprovementTips = generateImprovementTips(analysis.Weaknesses)
 	averageScore := 75.0
-	analysis.ComparisonScore = float64(result.TotalScore) - averageScore
+	analysis.ComparisonScore = result.TotalScore.ToFloat() - averageScore
 	return analysis
 }
 func generateImprovementTips(weaknesses []metadata.MetadataType) []string {
@@ -94,10 +96,10 @@ func CompareScores(result1, result2 *ScoreResult) string {
 		return fmt.Sprintf("두 옵션의 점수가 비슷합니다 (차이: %.1f점)", diff)
 	}
 }
-func RecommendScenario(scores map[metadata.MetadataType]ScoreValue) ScoringScenario {
+func RecommendScenario(scores map[metadata.MetadataType]shared.ScoreValue) ScoringScenario {
 	type scorePair struct {
 		metadata metadata.MetadataType
-		score    ScoreValue
+		score    shared.ScoreValue
 	}
 	var highScores []scorePair
 	for mt, score := range scores {
@@ -125,7 +127,7 @@ func RecommendScenario(scores map[metadata.MetadataType]ScoreValue) ScoringScena
 func FormatScoreResult(result ScoreResult) string {
 	output := "🏠 아파트 스코어 결과\n"
 	output += "━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-	output += fmt.Sprintf("총점: %.1f점\n", result.TotalScore)
+	output += fmt.Sprintf("총점: %.1f점\n", result.TotalScore.ToFloat())
 	output += fmt.Sprintf("방법: %s\n", result.Method)
 	output += fmt.Sprintf("시나리오: %s\n", result.Scenario)
 	output += "\n📊 상세 점수:\n"
@@ -134,7 +136,7 @@ func FormatScoreResult(result ScoreResult) string {
 			weight := result.Weights[mt]
 			weighted := result.WeightedScores[mt]
 			output += fmt.Sprintf("  %-20s: %.1f점 (가중치: %.1f%%) → %.1f점\n",
-				mt.KoreanName(), rawScore, float64(weight)*100, weighted)
+				mt.KoreanName(), rawScore.ToFloat(), weight.ToFloat()*100, weighted.ToFloat())
 		}
 	}
 	return output

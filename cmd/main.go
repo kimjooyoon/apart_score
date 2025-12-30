@@ -3,221 +3,121 @@ package main
 import (
 	"apart_score/pkg/metadata"
 	"apart_score/pkg/scoring"
+	"apart_score/pkg/shared"
 	"fmt"
 )
 
 func main() {
 	fmt.Println("아파트 스코어링 시스템 시작")
-	fmt.Printf("층수 메타데이터: %s (%s)\n", metadata.FloorLevel.String(), metadata.FloorLevel.KoreanName())
-	fmt.Printf("역까지 거리 메타데이터: %s (%s)\n", metadata.DistanceToStation.String(), metadata.DistanceToStation.KoreanName())
-	fmt.Println("\n=== 모든 메타데이터 목록 ===")
+
+	// 메타데이터 출력
 	for i := metadata.MetadataType(0); i < metadata.MetadataTypeCount; i++ {
 		fmt.Printf("%d: %s (%s)\n", i.Index(), i.String(), i.KoreanName())
 	}
+
 	fmt.Println("\n=== 아파트 스코어링 예제 ===")
-	apartmentScores := map[metadata.MetadataType]scoring.ScoreValue{
-		metadata.FloorLevel:           85.0,
-		metadata.DistanceToStation:    95.0,
-		metadata.ElevatorPresence:     100.0,
-		metadata.ConstructionYear:     90.0,
-		metadata.ConstructionCompany:  85.0,
-		metadata.ApartmentSize:        75.0,
-		metadata.NearbyAmenities:      80.0,
-		metadata.TransportationAccess: 90.0,
-		metadata.SchoolDistrict:       70.0,
-		metadata.CrimeRate:            65.0,
-		metadata.GreenSpaceRatio:      60.0,
-		metadata.Parking:              80.0,
-		metadata.MaintenanceFee:       75.0,
-		metadata.HeatingSystem:        70.0,
+	apartmentScores := map[metadata.MetadataType]shared.ScoreValue{
+		metadata.FloorLevel:           shared.ScoreValueFromFloat(85.0),
+		metadata.DistanceToStation:    shared.ScoreValueFromFloat(95.0),
+		metadata.ElevatorPresence:     shared.ScoreValueFromFloat(100.0),
+		metadata.ConstructionYear:     shared.ScoreValueFromFloat(90.0),
+		metadata.ConstructionCompany:  shared.ScoreValueFromFloat(85.0),
+		metadata.ApartmentSize:        shared.ScoreValueFromFloat(75.0),
+		metadata.NearbyAmenities:      shared.ScoreValueFromFloat(80.0),
+		metadata.TransportationAccess: shared.ScoreValueFromFloat(90.0),
+		metadata.SchoolDistrict:       shared.ScoreValueFromFloat(70.0),
+		metadata.CrimeRate:            shared.ScoreValueFromFloat(65.0),
+		metadata.GreenSpaceRatio:      shared.ScoreValueFromFloat(60.0),
+		metadata.Parking:              shared.ScoreValueFromFloat(80.0),
+		metadata.MaintenanceFee:       shared.ScoreValueFromFloat(75.0),
+		metadata.HeatingSystem:        shared.ScoreValueFromFloat(70.0),
 	}
+
 	weights := scoring.GetScenarioWeights(scoring.ScenarioBalanced)
 	result, err := scoring.CalculateWithStrategy(apartmentScores, weights, scoring.StrategyWeightedSum)
 	if err != nil {
 		fmt.Printf("스코어링 실패: %v\n", err)
 		return
 	}
-	fmt.Println(scoring.FormatScoreResult(result))
-	analysis := scoring.AnalyzeScore(result)
-	fmt.Println("\n=== 상세 분석 ===")
-	fmt.Printf("강점 (%d개):\n", len(analysis.Strengths))
-	for _, mt := range analysis.Strengths {
-		fmt.Printf("  - %s\n", mt.KoreanName())
+
+	fmt.Println("🏠 아파트 스코어 결과")
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━")
+	fmt.Printf("총점: %.1f점\n", result.TotalScore.ToFloat())
+	fmt.Printf("방법: %s\n", result.Method)
+	fmt.Printf("시나리오: %s\n", result.Scenario)
+	fmt.Println("\n📊 상세 점수:")
+	for _, mt := range metadata.AllMetadataTypes() {
+		if rawScore, exists := result.RawScores[mt]; exists {
+			weight := result.Weights[mt]
+			weighted := result.WeightedScores[mt]
+			fmt.Printf("  %-20s: %.1f점 (가중치: %.1f%%) → %.1f점\n",
+				mt.KoreanName(), rawScore.ToFloat(), weight.ToFloat()*100, weighted.ToFloat())
+		}
 	}
-	fmt.Printf("\n약점 (%d개):\n", len(analysis.Weaknesses))
-	for _, mt := range analysis.Weaknesses {
-		fmt.Printf("  - %s\n", mt.KoreanName())
-	}
-	fmt.Printf("\n개선 제안:\n")
-	for _, tip := range analysis.ImprovementTips {
-		fmt.Printf("  - %s\n", tip)
-	}
-	fmt.Println("\n=== 시나리오 비교 ===")
-	scenarios := []scoring.ScoringScenario{
-		scoring.ScenarioBalanced,
-		scoring.ScenarioTransportation,
-		scoring.ScenarioEducation,
-		scoring.ScenarioCostEffective,
-	}
-	for _, scenario := range scenarios {
-		weights := scoring.GetScenarioWeights(scenario)
-		result, _ := scoring.CalculateWithStrategy(apartmentScores, weights, scoring.StrategyWeightedSum)
-		fmt.Printf("%-15s: %.1f점\n",
-			scoring.GetScenarioDescription(scenario),
-			result.TotalScore)
-	}
-	recommended := scoring.RecommendScenario(apartmentScores)
-	fmt.Printf("\n추천 시나리오: %s\n", scoring.GetScenarioDescription(recommended))
+
+	// 비교를 위한 두 번째 계산
 	fmt.Println("\n=== 사용자 정의 스코어링 테이블 예제 ===")
-	customWeights := map[metadata.MetadataType]scoring.Weight{
-		metadata.DistanceToStation:    0.30,
-		metadata.TransportationAccess: 0.25,
-		metadata.NearbyAmenities:      0.15,
-		metadata.FloorLevel:           0.10,
-		metadata.ElevatorPresence:     0.08,
-		metadata.ConstructionYear:     0.05,
-		metadata.ConstructionCompany:  0.02,
-		metadata.ApartmentSize:        0.02,
-		metadata.SchoolDistrict:       0.01,
-		metadata.CrimeRate:            0.01,
-		metadata.GreenSpaceRatio:      0.01,
-		metadata.Parking:              0.00,
-		metadata.MaintenanceFee:       0.00,
-		metadata.HeatingSystem:        0.00,
+	customWeights := map[metadata.MetadataType]shared.Weight{
+		metadata.FloorLevel:           shared.WeightFromFloat(0.10),
+		metadata.DistanceToStation:    shared.WeightFromFloat(0.30),
+		metadata.ElevatorPresence:     shared.WeightFromFloat(0.08),
+		metadata.ConstructionYear:     shared.WeightFromFloat(0.05),
+		metadata.ConstructionCompany:  shared.WeightFromFloat(0.02),
+		metadata.ApartmentSize:        shared.WeightFromFloat(0.02),
+		metadata.NearbyAmenities:      shared.WeightFromFloat(0.15),
+		metadata.TransportationAccess: shared.WeightFromFloat(0.25),
+		metadata.SchoolDistrict:       shared.WeightFromFloat(0.00),
+		metadata.CrimeRate:            shared.WeightFromFloat(0.00),
+		metadata.GreenSpaceRatio:      shared.WeightFromFloat(0.00),
+		metadata.Parking:              shared.WeightFromFloat(0.05),
+		metadata.MaintenanceFee:       shared.WeightFromFloat(0.03),
+		metadata.HeatingSystem:        shared.WeightFromFloat(0.00),
 	}
+
+	customWeights = shared.NormalizeWeights(customWeights)
 	customResult, err := scoring.CalculateWithStrategy(apartmentScores, customWeights, scoring.StrategyWeightedSum)
 	if err != nil {
 		fmt.Printf("사용자 정의 스코어링 실패: %v\n", err)
-	} else {
-		fmt.Println("🎯 교통 최우선 스코어링 테이블 결과:")
-		fmt.Println(scoring.FormatScoreResult(customResult))
-		fmt.Println("\n📊 비교 분석:")
-		fmt.Printf("균형 테이블 점수: %.1f점\n", result.TotalScore)
-		fmt.Printf("교통 최우선 점수: %.1f점\n", customResult.TotalScore)
-		fmt.Printf("차이: %.1f점\n", customResult.TotalScore-result.TotalScore)
-	}
-	fmt.Println("\n=== 여러 아파트 순위 비교 ===")
-	apartments := []scoring.ApartmentData{
-		{
-			ID:   "apt001",
-			Name: "강남 래미안",
-			Scores: map[metadata.MetadataType]scoring.ScoreValue{
-				metadata.FloorLevel:           85.0,
-				metadata.DistanceToStation:    95.0,
-				metadata.ElevatorPresence:     100.0,
-				metadata.ConstructionYear:     90.0,
-				metadata.ConstructionCompany:  88.0,
-				metadata.ApartmentSize:        75.0,
-				metadata.NearbyAmenities:      85.0,
-				metadata.TransportationAccess: 90.0,
-				metadata.SchoolDistrict:       80.0,
-				metadata.CrimeRate:            70.0,
-				metadata.GreenSpaceRatio:      65.0,
-				metadata.Parking:              85.0,
-				metadata.MaintenanceFee:       80.0,
-				metadata.HeatingSystem:        75.0,
-			},
-			Location: "서울 강남구",
-		},
-		{
-			ID:   "apt002",
-			Name: "서초 아크로텔",
-			Scores: map[metadata.MetadataType]scoring.ScoreValue{
-				metadata.FloorLevel:           80.0,
-				metadata.DistanceToStation:    85.0,
-				metadata.ElevatorPresence:     100.0,
-				metadata.ConstructionYear:     85.0,
-				metadata.ConstructionCompany:  82.0,
-				metadata.ApartmentSize:        70.0,
-				metadata.NearbyAmenities:      80.0,
-				metadata.TransportationAccess: 88.0,
-				metadata.SchoolDistrict:       75.0,
-				metadata.CrimeRate:            75.0,
-				metadata.GreenSpaceRatio:      70.0,
-				metadata.Parking:              80.0,
-				metadata.MaintenanceFee:       75.0,
-				metadata.HeatingSystem:        70.0,
-			},
-			Location: "서울 서초구",
-		},
-		{
-			ID:   "apt003",
-			Name: "송파 헬리오시티",
-			Scores: map[metadata.MetadataType]scoring.ScoreValue{
-				metadata.FloorLevel:           75.0,
-				metadata.DistanceToStation:    80.0,
-				metadata.ElevatorPresence:     95.0,
-				metadata.ConstructionYear:     80.0,
-				metadata.ConstructionCompany:  78.0,
-				metadata.ApartmentSize:        65.0,
-				metadata.NearbyAmenities:      75.0,
-				metadata.TransportationAccess: 82.0,
-				metadata.SchoolDistrict:       70.0,
-				metadata.CrimeRate:            80.0,
-				metadata.GreenSpaceRatio:      75.0,
-				metadata.Parking:              75.0,
-				metadata.MaintenanceFee:       70.0,
-				metadata.HeatingSystem:        65.0,
-			},
-			Location: "서울 송파구",
-		},
-		{
-			ID:   "apt004",
-			Name: "마포 래미안",
-			Scores: map[metadata.MetadataType]scoring.ScoreValue{
-				metadata.FloorLevel:           70.0,
-				metadata.DistanceToStation:    75.0,
-				metadata.ElevatorPresence:     90.0,
-				metadata.ConstructionYear:     75.0,
-				metadata.ConstructionCompany:  72.0,
-				metadata.ApartmentSize:        60.0,
-				metadata.NearbyAmenities:      70.0,
-				metadata.TransportationAccess: 78.0,
-				metadata.SchoolDistrict:       65.0,
-				metadata.CrimeRate:            85.0,
-				metadata.GreenSpaceRatio:      80.0,
-				metadata.Parking:              70.0,
-				metadata.MaintenanceFee:       65.0,
-				metadata.HeatingSystem:        60.0,
-			},
-			Location: "서울 마포구",
-		},
-	}
-	weights = make(map[metadata.MetadataType]scoring.Weight)
-	totalTypes := len(apartmentScores)
-	equalWeight := scoring.Weight(1.0 / float64(totalTypes))
-	for mt := range apartmentScores {
-		weights[mt] = equalWeight
-	}
-	rankings, err := scoring.CalculateRankings(apartments, weights, scoring.StrategyWeightedSum)
-	if err != nil {
-		fmt.Printf("순위 계산 실패: %v\n", err)
 		return
 	}
-	fmt.Println(scoring.FormatRankings(rankings, 3))
+
+	fmt.Println("🎯 교통 최우선 스코어링 테이블 결과:")
+	fmt.Printf("총점: %.1f점 (기존: %.1f점, 차이: %.1f점)\n",
+		customResult.TotalScore.ToFloat(), result.TotalScore.ToFloat(),
+		customResult.TotalScore.ToFloat()-result.TotalScore.ToFloat())
+
+	// 메타데이터 팩터 타입 예제
 	fmt.Println("\n=== 메타데이터 팩터 타입 예제 ===")
 	fmt.Println("디폴트 팩터 타입 설정:")
-	for mt := metadata.MetadataType(0); mt < metadata.MetadataTypeCount; mt++ {
-		fmt.Printf("  %s: %s\n", mt.KoreanName(), mt.FactorType())
+	for i := metadata.MetadataType(0); i < metadata.MetadataTypeCount; i++ {
+		fmt.Printf("  %s: %s\n", i.KoreanName(), i.FactorType())
 	}
+
 	fmt.Println("\n내부 요인 (아파트 자체 속성):")
 	internalFactors := metadata.GetMetadataByFactorType(metadata.FactorInternal)
 	for _, mt := range internalFactors {
-		fmt.Printf("  - %s\n", mt.KoreanName())
+		if mt != 0 { // zero value 필터링
+			fmt.Printf("  - %s\n", mt.KoreanName())
+		}
 	}
+
 	fmt.Println("\n외부 요인 (주변 환경):")
 	externalFactors := metadata.GetMetadataByFactorType(metadata.FactorExternal)
 	for _, mt := range externalFactors {
-		fmt.Printf("  - %s\n", mt.KoreanName())
+		if mt != 0 { // zero value 필터링
+			fmt.Printf("  - %s\n", mt.KoreanName())
+		}
 	}
+
 	fmt.Println("\n팩터 타입 변경 예제:")
 	fmt.Printf("변경 전 - 층수: %s\n", metadata.FloorLevel.FactorType())
-	err = metadata.SetFactorType(metadata.FloorLevel, metadata.FactorExternal)
-	if err != nil {
+	if err := metadata.SetFactorType(metadata.FloorLevel, metadata.FactorExternal); err != nil {
 		fmt.Printf("팩터 타입 변경 실패: %v\n", err)
 	} else {
 		fmt.Printf("변경 후 - 층수: %s\n", metadata.FloorLevel.FactorType())
-		_ = metadata.SetFactorType(metadata.FloorLevel, metadata.FactorInternal)
+		if err := metadata.SetFactorType(metadata.FloorLevel, metadata.FactorInternal); err != nil {
+			fmt.Printf("팩터 타입 복원 실패: %v\n", err)
+		}
 		fmt.Printf("복원 후 - 층수: %s\n", metadata.FloorLevel.FactorType())
 	}
 }

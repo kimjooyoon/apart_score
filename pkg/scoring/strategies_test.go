@@ -2,11 +2,12 @@ package scoring
 
 import (
 	"apart_score/pkg/metadata"
+	"apart_score/pkg/shared"
 	"testing"
 )
 
-func getTestScores() map[metadata.MetadataType]ScoreValue {
-	return map[metadata.MetadataType]ScoreValue{
+func getTestScores() map[metadata.MetadataType]shared.ScoreValue {
+	return map[metadata.MetadataType]shared.ScoreValue{
 		metadata.FloorLevel:           85.0,
 		metadata.DistanceToStation:    90.0,
 		metadata.ElevatorPresence:     100.0,
@@ -24,8 +25,8 @@ func getTestScores() map[metadata.MetadataType]ScoreValue {
 	}
 }
 
-func getTestWeights() map[metadata.MetadataType]Weight {
-	return map[metadata.MetadataType]Weight{
+func getTestWeights() map[metadata.MetadataType]shared.Weight {
+	return map[metadata.MetadataType]shared.Weight{
 		metadata.FloorLevel:           0.08,
 		metadata.DistanceToStation:    0.14,
 		metadata.ElevatorPresence:     0.07,
@@ -47,7 +48,7 @@ func TestCalculateWeightedSum(t *testing.T) {
 	scores := getTestScores()
 	weights := getTestWeights()
 
-	result, err := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
+	result, err := CalculateWithStrategy(scores, weights, Strategyshared.WeightedSum)
 	if err != nil {
 		t.Fatalf("Calculate failed: %v", err)
 	}
@@ -56,8 +57,8 @@ func TestCalculateWeightedSum(t *testing.T) {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
 
-	if result.Method != MethodWeightedSum {
-		t.Errorf("Expected method %v, got %v", MethodWeightedSum, result.Method)
+	if result.Method != Methodshared.WeightedSum {
+		t.Errorf("Expected method %v, got %v", Methodshared.WeightedSum, result.Method)
 	}
 
 	// 점수가 유효한 범위인지 확인 (양수)
@@ -84,7 +85,7 @@ func TestCalculateGeometricMean(t *testing.T) {
 	}
 
 	// 기하 평균은 산술 평균보다 낮아야 함
-	wsResult, _ := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
+	wsResult, _ := CalculateWithStrategy(scores, weights, Strategyshared.WeightedSum)
 	if result.TotalScore >= wsResult.TotalScore {
 		t.Error("Geometric mean should be lower than weighted sum for unbalanced scores")
 	}
@@ -134,7 +135,7 @@ func TestCalculateHarmonicMean(t *testing.T) {
 	}
 
 	// 조화 평균은 다른 평균들보다 낮아야 함
-	wsResult, _ := CalculateWithStrategy(scores, weights, StrategyWeightedSum)
+	wsResult, _ := CalculateWithStrategy(scores, weights, Strategyshared.WeightedSum)
 	if result.TotalScore >= wsResult.TotalScore {
 		t.Error("Harmonic mean should be lower than or equal to weighted sum")
 	}
@@ -143,7 +144,7 @@ func TestCalculateHarmonicMean(t *testing.T) {
 func TestGetAvailableStrategies(t *testing.T) {
 	strategies := GetAvailableStrategies()
 	expected := []StrategyType{
-		StrategyWeightedSum,
+		Strategyshared.WeightedSum,
 		StrategyGeometricMean,
 		StrategyMinMax,
 		StrategyHarmonicMean,
@@ -163,32 +164,32 @@ func TestGetAvailableStrategies(t *testing.T) {
 func TestStrategyValidation(t *testing.T) {
 	// 유효한 입력
 	validScores := getTestScores()
-	validWeights := getTestWeights()
+	validshared.Weights := getTestWeights()
 
-	err := validateStrategyInputs(validScores, validWeights)
+	err := validateStrategyInputs(validScores, validshared.Weights)
 	if err != nil {
 		t.Errorf("Valid inputs should pass validation: %v", err)
 	}
 
 	// 잘못된 점수 (음수)
-	invalidScores := make(map[metadata.MetadataType]ScoreValue)
+	invalidScores := make(map[metadata.MetadataType]shared.ScoreValue)
 	for k, v := range validScores {
 		invalidScores[k] = v
 	}
 	invalidScores[metadata.FloorLevel] = -10
 
-	err = validateStrategyInputs(invalidScores, validWeights)
+	err = validateStrategyInputs(invalidScores, validshared.Weights)
 	if err == nil {
 		t.Error("Invalid scores should fail validation")
 	}
 
 	// 잘못된 가중치 합계
-	invalidWeights := make(map[metadata.MetadataType]Weight)
-	for k, v := range validWeights {
-		invalidWeights[k] = v * 2 // 합계가 2가 되도록
+	invalidshared.Weights := make(map[metadata.MetadataType]shared.Weight)
+	for k, v := range validshared.Weights {
+		invalidshared.Weights[k] = v * 2 // 합계가 2가 되도록
 	}
 
-	err = validateStrategyInputs(validScores, invalidWeights)
+	err = validateStrategyInputs(validScores, invalidshared.Weights)
 	if err == nil {
 		t.Error("Invalid weights should fail validation")
 	}
@@ -200,7 +201,7 @@ func TestGetStrategyDescription(t *testing.T) {
 		expected  string
 		hasPrefix bool
 	}{
-		{StrategyWeightedSum, "각 메타데이터의 점수에 가중치를 곱한 후 합계를 계산하는 기본 전략입니다.", false},
+		{Strategyshared.WeightedSum, "각 메타데이터의 점수에 가중치를 곱한 후 합계를 계산하는 기본 전략입니다.", false},
 		{StrategyGeometricMean, "모든 요소가 균형을 이루어야 하는 경우에 적합한 전략입니다. 하나의 낮은 점수가 전체 점수를 크게 낮춥니다.", false},
 		{StrategyMinMax, "모든 요소가 일정 수준 이상이어야 하는 경우에 적합합니다. 가장 낮은 점수가 전체 점수를 결정합니다.", false},
 		{StrategyHarmonicMean, "낮은 점수에 매우 민감하게 반응하는 전략입니다. 모든 요소가 고르게 중요할 때 사용합니다.", false},
@@ -238,7 +239,7 @@ func TestCalculateRankings(t *testing.T) {
 		{
 			ID:   "apt1",
 			Name: "강남 뷰타워",
-			Scores: map[metadata.MetadataType]ScoreValue{
+			Scores: map[metadata.MetadataType]shared.ScoreValue{
 				metadata.FloorLevel:           85.0,
 				metadata.DistanceToStation:    95.0,
 				metadata.ElevatorPresence:     100.0,
@@ -259,7 +260,7 @@ func TestCalculateRankings(t *testing.T) {
 		{
 			ID:   "apt2",
 			Name: "서초 힐스테이트",
-			Scores: map[metadata.MetadataType]ScoreValue{
+			Scores: map[metadata.MetadataType]shared.ScoreValue{
 				metadata.FloorLevel:           80.0,
 				metadata.DistanceToStation:    85.0,
 				metadata.ElevatorPresence:     100.0,
@@ -280,7 +281,7 @@ func TestCalculateRankings(t *testing.T) {
 		{
 			ID:   "apt3",
 			Name: "송파 파크하비오",
-			Scores: map[metadata.MetadataType]ScoreValue{
+			Scores: map[metadata.MetadataType]shared.ScoreValue{
 				metadata.FloorLevel:           75.0,
 				metadata.DistanceToStation:    80.0,
 				metadata.ElevatorPresence:     95.0,
@@ -303,7 +304,7 @@ func TestCalculateRankings(t *testing.T) {
 	weights := getTestWeights()
 
 	// 가중치 합계 전략으로 순위 계산
-	summary, err := CalculateRankings(apartments, weights, StrategyWeightedSum)
+	summary, err := CalculateRankings(apartments, weights, Strategyshared.WeightedSum)
 	if err != nil {
 		t.Fatalf("CalculateRankings failed: %v", err)
 	}
@@ -313,8 +314,8 @@ func TestCalculateRankings(t *testing.T) {
 		t.Errorf("Expected %d apartments, got %d", len(apartments), summary.TotalApartments)
 	}
 
-	if summary.Strategy != StrategyWeightedSum {
-		t.Errorf("Expected strategy %v, got %v", StrategyWeightedSum, summary.Strategy)
+	if summary.Strategy != Strategyshared.WeightedSum {
+		t.Errorf("Expected strategy %v, got %v", Strategyshared.WeightedSum, summary.Strategy)
 	}
 
 	if len(summary.TopRanked) != len(apartments) {
@@ -372,7 +373,7 @@ func TestFormatRankings(t *testing.T) {
 		{
 			ID:   "apt1",
 			Name: "테스트 아파트 A",
-			Scores: map[metadata.MetadataType]ScoreValue{
+			Scores: map[metadata.MetadataType]shared.ScoreValue{
 				metadata.FloorLevel:           80.0,
 				metadata.DistanceToStation:    85.0,
 				metadata.ElevatorPresence:     100.0,
@@ -392,7 +393,7 @@ func TestFormatRankings(t *testing.T) {
 		{
 			ID:   "apt2",
 			Name: "테스트 아파트 B",
-			Scores: map[metadata.MetadataType]ScoreValue{
+			Scores: map[metadata.MetadataType]shared.ScoreValue{
 				metadata.FloorLevel:           85.0,
 				metadata.DistanceToStation:    90.0,
 				metadata.ElevatorPresence:     100.0,
@@ -412,7 +413,7 @@ func TestFormatRankings(t *testing.T) {
 	}
 
 	weights := getTestWeights()
-	summary, err := CalculateRankings(apartments, weights, StrategyWeightedSum)
+	summary, err := CalculateRankings(apartments, weights, Strategyshared.WeightedSum)
 	if err != nil {
 		t.Fatalf("CalculateRankings failed: %v", err)
 	}

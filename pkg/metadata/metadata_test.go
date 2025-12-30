@@ -50,6 +50,125 @@ func TestMetadataType_OrderStability(t *testing.T) {
 	}
 }
 
+func TestFactorType(t *testing.T) {
+	tests := []struct {
+		name        string
+		metadata    MetadataType
+		expected    FactorType
+		description string
+	}{
+		{"FloorLevel", FloorLevel, FactorInternal, "층수는 아파트 내부 요인"},
+		{"DistanceToStation", DistanceToStation, FactorExternal, "역거리는 외부 환경 요인"},
+		{"ElevatorPresence", ElevatorPresence, FactorInternal, "엘리베이터는 아파트 내부 요인"},
+		{"ConstructionYear", ConstructionYear, FactorInternal, "건축년도는 아파트 내부 요인"},
+		{"NearbyAmenities", NearbyAmenities, FactorExternal, "주변 편의시설은 외부 요인"},
+		{"SchoolDistrict", SchoolDistrict, FactorExternal, "학군은 외부 환경 요인"},
+		{"Parking", Parking, FactorInternal, "주차장은 아파트 내부 요인"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.metadata.FactorType(); got != tt.expected {
+				t.Errorf("%s: FactorType() = %v, expected %v (%s)", tt.name, got, tt.expected, tt.description)
+			}
+		})
+	}
+}
+
+func TestGetDefaultFactorTypes(t *testing.T) {
+	defaultTypes := GetDefaultFactorTypes()
+
+	if len(defaultTypes) != int(MetadataTypeCount) {
+		t.Errorf("Expected %d factor types, got %d", MetadataTypeCount, len(defaultTypes))
+	}
+
+	// 특정 값들 검증
+	if defaultTypes[FloorLevel] != FactorInternal {
+		t.Error("FloorLevel should be internal factor")
+	}
+
+	if defaultTypes[DistanceToStation] != FactorExternal {
+		t.Error("DistanceToStation should be external factor")
+	}
+
+	if defaultTypes[SchoolDistrict] != FactorExternal {
+		t.Error("SchoolDistrict should be external factor")
+	}
+}
+
+func TestSetFactorType(t *testing.T) {
+	// 원래 값 저장
+	originalType := FloorLevel.FactorType()
+
+	// 팩터 타입 변경
+	err := SetFactorType(FloorLevel, FactorExternal)
+	if err != nil {
+		t.Fatalf("SetFactorType failed: %v", err)
+	}
+
+	// 변경된 값 검증
+	if FloorLevel.FactorType() != FactorExternal {
+		t.Error("FactorType should be changed to external")
+	}
+
+	// 다시 원래 값으로 복원
+	err = SetFactorType(FloorLevel, originalType)
+	if err != nil {
+		t.Fatalf("SetFactorType failed to restore: %v", err)
+	}
+
+	if FloorLevel.FactorType() != originalType {
+		t.Error("FactorType should be restored to original")
+	}
+
+	// 유효하지 않은 메타데이터 타입 테스트
+	err = SetFactorType(MetadataType(-1), FactorInternal)
+	if err == nil {
+		t.Error("SetFactorType should fail for invalid metadata type")
+	}
+
+	// 유효하지 않은 팩터 타입 테스트
+	err = SetFactorType(FloorLevel, FactorType("invalid"))
+	if err == nil {
+		t.Error("SetFactorType should fail for invalid factor type")
+	}
+}
+
+func TestGetMetadataByFactorType(t *testing.T) {
+	internalTypes := GetMetadataByFactorType(FactorInternal)
+	externalTypes := GetMetadataByFactorType(FactorExternal)
+
+	// 총 개수 검증
+	if len(internalTypes)+len(externalTypes) != int(MetadataTypeCount) {
+		t.Errorf("Total metadata types should be %d, got %d internal + %d external",
+			MetadataTypeCount, len(internalTypes), len(externalTypes))
+	}
+
+	// 내부 요인에 층수가 포함되는지 검증
+	found := false
+	for _, mt := range internalTypes {
+		if mt == FloorLevel {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("FloorLevel should be in internal factors")
+	}
+
+	// 외부 요인에 학군이 포함되는지 검증
+	found = false
+	for _, mt := range externalTypes {
+		if mt == SchoolDistrict {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("SchoolDistrict should be in external factors")
+	}
+}
+
 func TestMetadataType_String(t *testing.T) {
 	tests := []struct {
 		name     string

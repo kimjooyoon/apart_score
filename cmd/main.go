@@ -167,4 +167,29 @@ func main() {
 		return
 	}
 	fmt.Println(scoring.FormatRankings(rankings, 3))
+	fmt.Println("\n=== 메타데이터 팩터 타입 예제 ===")
+	fmt.Println("디폴트 팩터 타입 설정:")
+	for mt := metadata.MetadataType(0); mt < metadata.MetadataTypeCount; mt++ {
+		fmt.Printf("  %s: %s\n", mt.KoreanName(), mt.FactorType())
+	}
+	fmt.Println("\n내부 요인 (아파트 자체 속성):")
+	internalFactors := metadata.GetMetadataByFactorType(metadata.FactorInternal)
+	for _, mt := range internalFactors {
+		fmt.Printf("  - %s\n", mt.KoreanName())
+	}
+	fmt.Println("\n외부 요인 (주변 환경):")
+	externalFactors := metadata.GetMetadataByFactorType(metadata.FactorExternal)
+	for _, mt := range externalFactors {
+		fmt.Printf("  - %s\n", mt.KoreanName())
+	}
+	fmt.Println("\n팩터 타입 변경 예제:")
+	fmt.Printf("변경 전 - 층수: %s\n", metadata.FloorLevel.FactorType())
+	err = metadata.SetFactorType(metadata.FloorLevel, metadata.FactorExternal)
+	if err != nil {
+		fmt.Printf("팩터 타입 변경 실패: %v\n", err)
+	} else {
+		fmt.Printf("변경 후 - 층수: %s\n", metadata.FloorLevel.FactorType())
+		_ = metadata.SetFactorType(metadata.FloorLevel, metadata.FactorInternal)
+		fmt.Printf("복원 후 - 층수: %s\n", metadata.FloorLevel.FactorType())
+	}
 }

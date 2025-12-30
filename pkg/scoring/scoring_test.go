@@ -11,9 +11,9 @@ func TestDefaultScorer_Calculate(t *testing.T) {
 
 	// 테스트용 점수 데이터
 	scores := map[metadata.MetadataType]ScoreValue{
-		metadata.FloorLevel:         85.0,
-		metadata.DistanceToStation:  90.0,
-		metadata.ElevatorPresence:   100.0,
+		metadata.FloorLevel:        85.0,
+		metadata.DistanceToStation: 90.0,
+		metadata.ElevatorPresence:  100.0,
 		// 다른 요소들은 70점으로 설정
 	}
 
@@ -33,17 +33,13 @@ func TestDefaultScorer_Calculate(t *testing.T) {
 	if result.TotalScore <= 0 || result.TotalScore > 100 {
 		t.Errorf("Invalid total score: %v", result.TotalScore)
 	}
-
-	if result.Grade == "" {
-		t.Error("Grade should not be empty")
-	}
 }
 
 func TestQuickScore(t *testing.T) {
 	scores := map[metadata.MetadataType]ScoreValue{
-		metadata.FloorLevel:         85.0,
-		metadata.DistanceToStation:  90.0,
-		metadata.ElevatorPresence:   100.0,
+		metadata.FloorLevel:        85.0,
+		metadata.DistanceToStation: 90.0,
+		metadata.ElevatorPresence:  100.0,
 	}
 
 	// 다른 요소들 기본값 설정
@@ -72,10 +68,10 @@ func TestAnalyzeScore(t *testing.T) {
 	result := &ScoreResult{
 		TotalScore: 85.0,
 		RawScores: map[metadata.MetadataType]ScoreValue{
-			metadata.FloorLevel:         90.0, // 강점
-			metadata.DistanceToStation:  95.0, // 강점
-			metadata.ElevatorPresence:   50.0, // 약점
-			metadata.MaintenanceFee:     55.0, // 약점
+			metadata.FloorLevel:        90.0, // 강점
+			metadata.DistanceToStation: 95.0, // 강점
+			metadata.ElevatorPresence:  50.0, // 약점
+			metadata.MaintenanceFee:    55.0, // 약점
 		},
 		Weights: map[metadata.MetadataType]Weight{
 			metadata.FloorLevel:        0.1,
@@ -85,7 +81,6 @@ func TestAnalyzeScore(t *testing.T) {
 		},
 		Method:   MethodWeightedSum,
 		Scenario: ScenarioBalanced,
-		Grade:    GradeB,
 	}
 
 	analysis := AnalyzeScore(result)

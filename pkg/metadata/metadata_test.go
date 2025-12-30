@@ -106,10 +106,10 @@ func TestGetByIndex(t *testing.T) {
 
 func TestGetByEnglishName(t *testing.T) {
 	tests := []struct {
-		name      string
+		name        string
 		englishName string
-		expected  MetadataType
-		expectErr bool
+		expected    MetadataType
+		expectErr   bool
 	}{
 		{"Valid Floor Level", "Floor Level", FloorLevel, false},
 		{"Valid Distance to Station", "Distance to Station", DistanceToStation, false},
@@ -134,10 +134,10 @@ func TestGetByEnglishName(t *testing.T) {
 
 func TestGetByKoreanName(t *testing.T) {
 	tests := []struct {
-		name      string
+		name       string
 		koreanName string
-		expected  MetadataType
-		expectErr bool
+		expected   MetadataType
+		expectErr  bool
 	}{
 		{"Valid 층수", "층수", FloorLevel, false},
 		{"Valid 역까지 거리", "역까지 거리", DistanceToStation, false},

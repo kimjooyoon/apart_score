@@ -1,12 +1,14 @@
 # 아파트 스코어링 프로젝트 Makefile
 
-.PHONY: help clean build test clean-comments clean-comments-single restore-backups clean-all
+.PHONY: help clean build test lint lint-fix clean-comments clean-comments-single restore-backups clean-all
 
 # 기본 타겟
 help:
 	@echo "사용 가능한 명령어들:"
 	@echo "  build              - 프로젝트 빌드"
 	@echo "  test               - 테스트 실행"
+	@echo "  lint               - 코드 린팅 실행"
+	@echo "  lint-fix           - 코드 린팅 및 자동 수정"
 	@echo "  clean-comments     - 모든 Go 파일에서 주석 제거"
 	@echo "  clean-comments-single FILE=<file> - 특정 파일에서 주석 제거"
 	@echo "  restore-backups    - 백업 파일에서 원본 복원"
@@ -72,10 +74,17 @@ clean-all:
 	@find . -name "apart_score" -delete
 	@echo "정리 완료!"
 
+# 코드 린팅
+lint:
+	@echo "🔍 Running golangci-lint..."
+	@golangci-lint run
+
+# 코드 린팅 및 수정
+lint-fix:
+	@echo "🔧 Running golangci-lint with auto-fix..."
+	@golangci-lint run --fix
+
 # 일반 정리
-clean:
-	
-# Clean target: Remove comments and apply goimports (includes gofmt + import cleanup)
 clean:
 	@echo "🧹 Starting code cleanup process..."
 	@echo "📝 Step 1: Removing comments from Go files..."

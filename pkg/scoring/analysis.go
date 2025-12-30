@@ -123,12 +123,12 @@ func RecommendScenario(scores map[metadata.MetadataType]ScoreValue) ScoringScena
 	return ScenarioBalanced
 }
 func FormatScoreResult(result *ScoreResult) string {
-	output := fmt.Sprintf("🏠 아파트 스코어 결과\n")
-	output += fmt.Sprintf("━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+	output := "🏠 아파트 스코어 결과\n"
+	output += "━━━━━━━━━━━━━━━━━━━━━━━━━\n"
 	output += fmt.Sprintf("총점: %.1f점\n", result.TotalScore)
 	output += fmt.Sprintf("방법: %s\n", result.Method)
 	output += fmt.Sprintf("시나리오: %s\n", result.Scenario)
-	output += fmt.Sprintf("\n📊 상세 점수:\n")
+	output += "\n📊 상세 점수:\n"
 	for _, mt := range metadata.AllMetadataTypes() {
 		if rawScore, exists := result.RawScores[mt]; exists {
 			weight := result.Weights[mt]

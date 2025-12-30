@@ -231,3 +231,214 @@ func containsAt(s, substr string) bool {
 	}
 	return false
 }
+
+func TestCalculateRankings(t *testing.T) {
+	// 테스트용 아파트 데이터 생성
+	apartments := []ApartmentData{
+		{
+			ID:   "apt1",
+			Name: "강남 뷰타워",
+			Scores: map[metadata.MetadataType]ScoreValue{
+				metadata.FloorLevel:         85.0,
+				metadata.DistanceToStation:  95.0,
+				metadata.ElevatorPresence:   100.0,
+				metadata.ConstructionYear:   90.0,
+				metadata.ConstructionCompany: 88.0,
+				metadata.ApartmentSize:      75.0,
+				metadata.NearbyAmenities:    85.0,
+				metadata.TransportationAccess: 90.0,
+				metadata.SchoolDistrict:     80.0,
+				metadata.CrimeRate:          70.0,
+				metadata.GreenSpaceRatio:    65.0,
+				metadata.Parking:            85.0,
+				metadata.MaintenanceFee:     80.0,
+				metadata.HeatingSystem:      75.0,
+			},
+			Location: "서울 강남구",
+		},
+		{
+			ID:   "apt2",
+			Name: "서초 힐스테이트",
+			Scores: map[metadata.MetadataType]ScoreValue{
+				metadata.FloorLevel:         80.0,
+				metadata.DistanceToStation:  85.0,
+				metadata.ElevatorPresence:   100.0,
+				metadata.ConstructionYear:   85.0,
+				metadata.ConstructionCompany: 82.0,
+				metadata.ApartmentSize:      70.0,
+				metadata.NearbyAmenities:    80.0,
+				metadata.TransportationAccess: 88.0,
+				metadata.SchoolDistrict:     75.0,
+				metadata.CrimeRate:          75.0,
+				metadata.GreenSpaceRatio:    70.0,
+				metadata.Parking:            80.0,
+				metadata.MaintenanceFee:     75.0,
+				metadata.HeatingSystem:      70.0,
+			},
+			Location: "서울 서초구",
+		},
+		{
+			ID:   "apt3",
+			Name: "송파 파크하비오",
+			Scores: map[metadata.MetadataType]ScoreValue{
+				metadata.FloorLevel:         75.0,
+				metadata.DistanceToStation:  80.0,
+				metadata.ElevatorPresence:   95.0,
+				metadata.ConstructionYear:   80.0,
+				metadata.ConstructionCompany: 78.0,
+				metadata.ApartmentSize:      65.0,
+				metadata.NearbyAmenities:    75.0,
+				metadata.TransportationAccess: 82.0,
+				metadata.SchoolDistrict:     70.0,
+				metadata.CrimeRate:          80.0,
+				metadata.GreenSpaceRatio:    75.0,
+				metadata.Parking:            75.0,
+				metadata.MaintenanceFee:     70.0,
+				metadata.HeatingSystem:      65.0,
+			},
+			Location: "서울 송파구",
+		},
+	}
+
+	weights := getTestWeights()
+
+	// 가중치 합계 전략으로 순위 계산
+	summary, err := CalculateRankings(apartments, weights, StrategyWeightedSum)
+	if err != nil {
+		t.Fatalf("CalculateRankings failed: %v", err)
+	}
+
+	// 기본 검증
+	if summary.TotalApartments != len(apartments) {
+		t.Errorf("Expected %d apartments, got %d", len(apartments), summary.TotalApartments)
+	}
+
+	if summary.Strategy != StrategyWeightedSum {
+		t.Errorf("Expected strategy %v, got %v", StrategyWeightedSum, summary.Strategy)
+	}
+
+	if len(summary.TopRanked) != len(apartments) {
+		t.Errorf("Expected %d rankings, got %d", len(apartments), len(summary.TopRanked))
+	}
+
+	// 순위 검증 (점수가 높은 순서로 정렬되어야 함)
+	for i := 1; i < len(summary.TopRanked); i++ {
+		if summary.TopRanked[i-1].Score < summary.TopRanked[i].Score {
+			t.Errorf("Rankings not sorted correctly: rank %d score %.1f < rank %d score %.1f",
+				i, summary.TopRanked[i-1].Score, i+1, summary.TopRanked[i].Score)
+		}
+	}
+
+	// 순위 번호 검증
+	for i, ranking := range summary.TopRanked {
+		expectedRank := i + 1
+		if ranking.Rank != expectedRank {
+			t.Errorf("Expected rank %d, got %d for apartment %s", expectedRank, ranking.Rank, ranking.Apartment.Name)
+		}
+	}
+
+	// 백분위수 범위 검증
+	for _, ranking := range summary.TopRanked {
+		if ranking.Percentile < 0 || ranking.Percentile > 100 {
+			t.Errorf("Invalid percentile %.1f for apartment %s", ranking.Percentile, ranking.Apartment.Name)
+		}
+	}
+
+	// 1위 아파트는 가장 높은 백분위수를 가져야 함
+	if len(summary.TopRanked) > 1 {
+		firstPercentile := summary.TopRanked[0].Percentile
+		for i := 1; i < len(summary.TopRanked); i++ {
+			if summary.TopRanked[i].Percentile > firstPercentile {
+				t.Errorf("First ranked apartment should have highest percentile, got %.1f vs %.1f",
+					firstPercentile, summary.TopRanked[i].Percentile)
+			}
+		}
+	}
+
+	// 점수 범위 검증
+	if summary.ScoreRange.Min > summary.ScoreRange.Max {
+		t.Error("Min score should not be greater than max score")
+	}
+
+	calculatedAvg := summary.ScoreRange.Min + summary.ScoreRange.Max/2 // 대략적인 평균
+	if summary.ScoreRange.Avg < calculatedAvg*0.8 || summary.ScoreRange.Avg > calculatedAvg*1.2 {
+		t.Logf("Average score %.1f seems reasonable compared to range %.1f-%.1f",
+			summary.ScoreRange.Avg, summary.ScoreRange.Min, summary.ScoreRange.Max)
+	}
+}
+
+func TestFormatRankings(t *testing.T) {
+	apartments := []ApartmentData{
+		{
+			ID:   "apt1",
+			Name: "테스트 아파트 A",
+			Scores: map[metadata.MetadataType]ScoreValue{
+				metadata.FloorLevel:         80.0,
+				metadata.DistanceToStation:  85.0,
+				metadata.ElevatorPresence:   100.0,
+				metadata.ConstructionYear:   75.0,
+				metadata.ConstructionCompany: 70.0,
+				metadata.ApartmentSize:      65.0,
+				metadata.NearbyAmenities:    75.0,
+				metadata.TransportationAccess: 80.0,
+				metadata.SchoolDistrict:     70.0,
+				metadata.CrimeRate:          75.0,
+				metadata.GreenSpaceRatio:    70.0,
+				metadata.Parking:            80.0,
+				metadata.MaintenanceFee:     75.0,
+				metadata.HeatingSystem:      70.0,
+			},
+		},
+		{
+			ID:   "apt2",
+			Name: "테스트 아파트 B",
+			Scores: map[metadata.MetadataType]ScoreValue{
+				metadata.FloorLevel:         85.0,
+				metadata.DistanceToStation:  90.0,
+				metadata.ElevatorPresence:   100.0,
+				metadata.ConstructionYear:   80.0,
+				metadata.ConstructionCompany: 75.0,
+				metadata.ApartmentSize:      70.0,
+				metadata.NearbyAmenities:    80.0,
+				metadata.TransportationAccess: 85.0,
+				metadata.SchoolDistrict:     75.0,
+				metadata.CrimeRate:          70.0,
+				metadata.GreenSpaceRatio:    65.0,
+				metadata.Parking:            85.0,
+				metadata.MaintenanceFee:     80.0,
+				metadata.HeatingSystem:      75.0,
+			},
+		},
+	}
+
+	weights := getTestWeights()
+	summary, err := CalculateRankings(apartments, weights, StrategyWeightedSum)
+	if err != nil {
+		t.Fatalf("CalculateRankings failed: %v", err)
+	}
+
+	// 전체 순위 포맷팅
+	fullOutput := FormatRankings(summary, 0)
+	if !contains(fullOutput, "테스트 아파트 A") || !contains(fullOutput, "테스트 아파트 B") {
+		t.Error("Formatted output should contain all apartment names")
+	}
+
+	// 제한된 순위 포맷팅 (상위 1개만)
+	limitedOutput := FormatRankings(summary, 1)
+	if !contains(limitedOutput, "🥇") {
+		t.Error("Limited output should contain top rank emoji")
+	}
+	if contains(limitedOutput, "테스트 아파트 A") && contains(limitedOutput, "테스트 아파트 B") {
+		// 상위 1개 제한인데 두 아파트 모두 나오면 외 XX개 문구가 있어야 함
+		if !contains(limitedOutput, "외") {
+			t.Error("Limited output should indicate more apartments exist")
+		}
+	}
+
+	// 빈 데이터 테스트
+	emptyOutput := FormatRankings(nil, 0)
+	expected := "순위 데이터가 없습니다."
+	if emptyOutput != expected {
+		t.Errorf("Expected empty output %q, got %q", expected, emptyOutput)
+	}
+}

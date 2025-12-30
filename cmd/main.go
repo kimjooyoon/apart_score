@@ -66,4 +66,112 @@ func main() {
 	}
 	recommended := scoring.RecommendScenario(apartmentScores)
 	fmt.Printf("\n추천 시나리오: %s\n", scoring.GetScenarioDescription(recommended))
+
+	// 여러 아파트 순위 비교 예제
+	fmt.Println("\n=== 여러 아파트 순위 비교 ===")
+
+	apartments := []scoring.ApartmentData{
+		{
+			ID:   "apt001",
+			Name: "강남 래미안",
+			Scores: map[metadata.MetadataType]scoring.ScoreValue{
+				metadata.FloorLevel:         85.0,
+				metadata.DistanceToStation:  95.0,
+				metadata.ElevatorPresence:   100.0,
+				metadata.ConstructionYear:   90.0,
+				metadata.ConstructionCompany: 88.0,
+				metadata.ApartmentSize:      75.0,
+				metadata.NearbyAmenities:    85.0,
+				metadata.TransportationAccess: 90.0,
+				metadata.SchoolDistrict:     80.0,
+				metadata.CrimeRate:          70.0,
+				metadata.GreenSpaceRatio:    65.0,
+				metadata.Parking:            85.0,
+				metadata.MaintenanceFee:     80.0,
+				metadata.HeatingSystem:      75.0,
+			},
+			Location: "서울 강남구",
+		},
+		{
+			ID:   "apt002",
+			Name: "서초 아크로텔",
+			Scores: map[metadata.MetadataType]scoring.ScoreValue{
+				metadata.FloorLevel:         80.0,
+				metadata.DistanceToStation:  85.0,
+				metadata.ElevatorPresence:   100.0,
+				metadata.ConstructionYear:   85.0,
+				metadata.ConstructionCompany: 82.0,
+				metadata.ApartmentSize:      70.0,
+				metadata.NearbyAmenities:    80.0,
+				metadata.TransportationAccess: 88.0,
+				metadata.SchoolDistrict:     75.0,
+				metadata.CrimeRate:          75.0,
+				metadata.GreenSpaceRatio:    70.0,
+				metadata.Parking:            80.0,
+				metadata.MaintenanceFee:     75.0,
+				metadata.HeatingSystem:      70.0,
+			},
+			Location: "서울 서초구",
+		},
+		{
+			ID:   "apt003",
+			Name: "송파 헬리오시티",
+			Scores: map[metadata.MetadataType]scoring.ScoreValue{
+				metadata.FloorLevel:         75.0,
+				metadata.DistanceToStation:  80.0,
+				metadata.ElevatorPresence:   95.0,
+				metadata.ConstructionYear:   80.0,
+				metadata.ConstructionCompany: 78.0,
+				metadata.ApartmentSize:      65.0,
+				metadata.NearbyAmenities:    75.0,
+				metadata.TransportationAccess: 82.0,
+				metadata.SchoolDistrict:     70.0,
+				metadata.CrimeRate:          80.0,
+				metadata.GreenSpaceRatio:    75.0,
+				metadata.Parking:            75.0,
+				metadata.MaintenanceFee:     70.0,
+				metadata.HeatingSystem:      65.0,
+			},
+			Location: "서울 송파구",
+		},
+		{
+			ID:   "apt004",
+			Name: "마포 래미안",
+			Scores: map[metadata.MetadataType]scoring.ScoreValue{
+				metadata.FloorLevel:         70.0,
+				metadata.DistanceToStation:  75.0,
+				metadata.ElevatorPresence:   90.0,
+				metadata.ConstructionYear:   75.0,
+				metadata.ConstructionCompany: 72.0,
+				metadata.ApartmentSize:      60.0,
+				metadata.NearbyAmenities:    70.0,
+				metadata.TransportationAccess: 78.0,
+				metadata.SchoolDistrict:     65.0,
+				metadata.CrimeRate:          85.0,
+				metadata.GreenSpaceRatio:    80.0,
+				metadata.Parking:            70.0,
+				metadata.MaintenanceFee:     65.0,
+				metadata.HeatingSystem:      60.0,
+			},
+			Location: "서울 마포구",
+		},
+	}
+
+	// 가중치 설정 (균형 잡힌 가중치)
+	weights := make(map[metadata.MetadataType]scoring.Weight)
+	totalTypes := len(apartmentScores)
+	equalWeight := scoring.Weight(1.0 / float64(totalTypes))
+	for mt := range apartmentScores {
+		weights[mt] = equalWeight // 모든 요소에 동일 가중치 부여
+	}
+
+	// 가중치 합계 전략으로 순위 계산
+	rankings, err := scoring.CalculateRankings(apartments, weights, scoring.StrategyWeightedSum)
+	if err != nil {
+		fmt.Printf("순위 계산 실패: %v\n", err)
+		return
+	}
+
+	// 순위 결과 출력 (상위 3개만)
+	fmt.Println(scoring.FormatRankings(rankings, 3))
 }
